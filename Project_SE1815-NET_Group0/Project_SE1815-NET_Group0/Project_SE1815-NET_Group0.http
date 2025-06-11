@@ -1,0 +1,6 @@
+@Project_SE1815_NET_Group0_HostAddress = http://localhost:5297
+
+GET {{Project_SE1815_NET_Group0_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
