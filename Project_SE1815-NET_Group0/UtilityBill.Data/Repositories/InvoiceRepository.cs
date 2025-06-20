@@ -11,5 +11,13 @@ namespace UtilityBill.Data.Repositories
         {
             return await _dbSet.AnyAsync(i => i.RoomId == roomId && i.InvoicePeriodYear == year && i.InvoicePeriodMonth == month);
         }
+        // Thêm vào InvoiceRepository.cs
+        public async Task<Invoice?> GetInvoiceWithDetailsAsync(Guid invoiceId)
+        {
+            return await _dbSet
+                .Include(i => i.InvoiceDetails) // Lấy chi tiết hóa đơn
+                .Include(i => i.Room)           // Lấy thông tin phòng
+                .FirstOrDefaultAsync(i => i.Id == invoiceId);
+        }
     }
 }

@@ -8,9 +8,10 @@ using UtilityBill.Business.Interfaces;
 using UtilityBill.Business.Services;
 using UtilityBill.Data.Context;
 using UtilityBill.Data.Repositories;
-
+using QuestPDF.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
-
+QuestPDF.Settings.License = LicenseType.Community;
+QuestPDF.Infrastructure.FontManager.RegisterFont(File.OpenRead(Path.Combine(AppContext.BaseDirectory, "Fonts", "Roboto-Regular.ttf")));
 // Đăng ký các dịch vụ
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<UtilityBillDbContext>(options =>
@@ -24,7 +25,7 @@ builder.Services.AddScoped<ITenantHistoryRepository, TenantHistoryRepository>();
 builder.Services.AddScoped<IMeterReadingRepository, MeterReadingRepository>();
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 builder.Services.AddSingleton<IBillingConfigService, BillingConfigService>(); // Thêm lại dòng này nếu bạn đã xóa
-
+builder.Services.AddScoped<IPdfService, PdfService>();
 // Đăng ký service nghiệp vụ
 builder.Services.AddScoped<IBillingService, BillingService>();
 
