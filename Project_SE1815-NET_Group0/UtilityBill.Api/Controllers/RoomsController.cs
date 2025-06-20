@@ -1,11 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UtilityBill.Business.DTOs;
 using UtilityBill.Business.Services;
 using UtilityBill.Data.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace UtilityBill.Api.Controllers
 {
-    // [Authorize] // Bỏ comment dòng này để bắt buộc phải đăng nhập mới dùng được API này
+    //[Authorize]
     public class RoomsController : BaseApiController
     {
         private readonly IRoomService _roomService;
@@ -22,49 +25,55 @@ namespace UtilityBill.Api.Controllers
             return Ok(rooms);
         }
 
-        [HttpGet("{id}")] // GET: api/rooms/101
+        [HttpGet("{id}")] // GET: api/rooms/{id}
         public async Task<ActionResult<Room>> GetRoom(int id)
         {
             var room = await _roomService.GetRoomByIdAsync(id);
             if (room == null)
             {
-                return NotFound();
+                return NotFound(); // 404 Not Found
             }
             return Ok(room);
         }
 
         [HttpPost] // POST: api/rooms
-        public async Task<ActionResult<Room>> CreateRoom(Room room)
+        public async Task<ActionResult<Room>> CreateRoom(CreateRoomDto roomDto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            await _roomService.CreateRoomAsync(room);
-            return CreatedAtAction(nameof(GetRoom), new { id = room.Id }, room);
+            var newRoom = await _roomService.CreateRoomAsync(roomDto);
+            // Trả về response 201 Created cùng với location và đối tượng vừa tạo
+            return CreatedAtAction(nameof(GetRoom), new { id = newRoom.Id }, newRoom);
         }
 
-        [HttpPut("{id}")] // PUT: api/rooms/101
-        public async Task<IActionResult> UpdateRoom(int id, Room room)
+        [HttpPut("{id}")] // PUT: api/rooms/{id}
+        public async Task<IActionResult> UpdateRoom(int id, CreateRoomDto roomDto)
         {
-            if (id != room.Id)
+            if (!ModelState.IsValid)
             {
-                return BadRequest();
+                return BadRequest(ModelState);
             }
-            await _roomService.UpdateRoomAsync(room);
-            return NoContent(); // Trả về status 204 No Content khi thành công
+
+            var result = await _roomService.UpdateRoomAsync(id, roomDto);
+            if (!result)
+            {
+                return NotFound(); // Không tìm thấy phòng để cập nhật
+            }
+
+            return NoContent(); // 204 No Content: Thành công nhưng không có body trả về
         }
 
-        [HttpDelete("{id}")] // DELETE: api/rooms/101
+        [HttpDelete("{id}")] // DELETE: api/rooms/{id}
         public async Task<IActionResult> DeleteRoom(int id)
         {
-            var room = await _roomService.GetRoomByIdAsync(id);
-            if (room == null)
+            var result = await _roomService.DeleteRoomAsync(id);
+            if (!result)
             {
-                return NotFound();
+                return NotFound(); // Không tìm thấy phòng để xóa
             }
-            await _roomService.DeleteRoomAsync(id);
-            return NoContent();
+            return NoContent(); // 204 No Content
         }
     }
 }

@@ -17,7 +17,7 @@ public partial class Room
 
     public decimal Price { get; set; }
 
-    public string? QrcodeData { get; set; }
+    public string? QRCodeData { get; set; }
 
     public string Status { get; set; } = null!;
 

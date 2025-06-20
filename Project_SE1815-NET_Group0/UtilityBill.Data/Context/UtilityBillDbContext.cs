@@ -164,13 +164,13 @@ public partial class UtilityBillDbContext : DbContext
 
             entity.HasIndex(e => e.RoomNumber, "UQ__Rooms__AE10E07A2A9FB89F").IsUnique();
 
-            entity.HasIndex(e => e.QrcodeData, "UQ__Rooms__E8D1C96FD9285C5E").IsUnique();
+            entity.HasIndex(e => e.QRCodeData, "UQ__Rooms__E8D1C96FD9285C5E").IsUnique();
 
             entity.Property(e => e.Area).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Block).HasMaxLength(50);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.QrcodeData)
+            entity.Property(e => e.QRCodeData)
                 .HasMaxLength(255)
                 .HasColumnName("QRCodeData");
             entity.Property(e => e.RoomNumber).HasMaxLength(50);
