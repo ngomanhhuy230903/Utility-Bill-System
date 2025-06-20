@@ -80,5 +80,75 @@ namespace UtilityBill.Business.Services
             await _unitOfWork.SaveChangesAsync();
             return true;
         }
+        public async Task<TenantHistoryDto?> AssignTenantAsync(int roomId, AssignTenantDto assignDto)
+        {
+            // 1. Kiểm tra các điều kiện (giữ nguyên như cũ)
+            var room = await _unitOfWork.RoomRepository.GetByIdAsync(roomId);
+            if (room == null) return null;
+            if (room.Status != "Vacant") return null;
+
+            var tenant = await _unitOfWork.UserRepository.GetUserByIdAsync(assignDto.TenantId);
+            if (tenant == null) return null;
+
+            // 2. Tạo bản ghi lịch sử mới (giữ nguyên như cũ)
+            var history = new TenantHistory
+            {
+                RoomId = roomId,
+                TenantId = assignDto.TenantId,
+                MoveInDate = DateOnly.FromDateTime(assignDto.MoveInDate),
+                MoveOutDate = null
+            };
+            await _unitOfWork.TenantHistoryRepository.AddAsync(history);
+
+            // 3. Cập nhật trạng thái phòng (giữ nguyên như cũ)
+            room.Status = "Occupied";
+            _unitOfWork.RoomRepository.Update(room);
+
+            // 4. Lưu tất cả thay đổi vào DB (giữ nguyên như cũ)
+            await _unitOfWork.SaveChangesAsync();
+
+            // 5. TẠO VÀ TRẢ VỀ DTO, KHÔNG TRẢ VỀ ENTITY
+            // Đây là bước sửa lỗi
+            return new TenantHistoryDto
+            {
+                Id = history.Id,
+                RoomId = room.Id,
+                RoomNumber = room.RoomNumber,
+                TenantId = tenant.Id,
+                TenantName = tenant.FullName,
+                MoveInDate = history.MoveInDate,
+                MoveOutDate = history.MoveOutDate
+            };
+        }
+
+        public async Task<bool> UnassignTenantAsync(int roomId)
+        {
+            // 1. Kiểm tra phòng
+            var room = await _unitOfWork.RoomRepository.GetByIdAsync(roomId);
+            if (room == null || room.Status != "Occupied")
+            {
+                return false; // Phòng không tồn tại hoặc không có người ở
+            }
+
+            // 2. Tìm lịch sử thuê hiện tại của phòng
+            var currentHistory = await _unitOfWork.TenantHistoryRepository.GetCurrentHistoryByRoomIdAsync(roomId);
+            if (currentHistory == null)
+            {
+                return false; // Không tìm thấy ai đang ở phòng này (dữ liệu không nhất quán)
+            }
+
+            // 3. Ghi nhận ngày chuyển đi
+            currentHistory.MoveOutDate = DateOnly.FromDateTime(DateTime.UtcNow);
+            _unitOfWork.TenantHistoryRepository.Update(currentHistory);
+
+            // 4. Cập nhật trạng thái phòng thành trống
+            room.Status = "Vacant";
+            _unitOfWork.RoomRepository.Update(room);
+
+            // 5. Lưu thay đổi
+            await _unitOfWork.SaveChangesAsync();
+
+            return true;
+        }
     }
 }

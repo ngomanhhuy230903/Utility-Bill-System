@@ -75,5 +75,28 @@ namespace UtilityBill.Api.Controllers
             }
             return NoContent(); // 204 No Content
         }
+        // Thêm 2 action này vào trong class RoomsController
+
+        [HttpPost("{roomId}/assign-tenant")]
+        public async Task<IActionResult> AssignTenant(int roomId, AssignTenantDto assignDto)
+        {
+            var history = await _roomService.AssignTenantAsync(roomId, assignDto);
+            if (history == null)
+            {
+                return BadRequest("Không thể gán phòng. Phòng không tồn tại, đã có người ở, hoặc ID khách thuê không hợp lệ.");
+            }
+            return Ok(history);
+        }
+
+        [HttpPost("{roomId}/unassign-tenant")]
+        public async Task<IActionResult> UnassignTenant(int roomId)
+        {
+            var success = await _roomService.UnassignTenantAsync(roomId);
+            if (!success)
+            {
+                return BadRequest("Không thể hủy gán. Phòng không tồn tại hoặc không có người ở.");
+            }
+            return NoContent(); // Thành công
+        }
     }
 }

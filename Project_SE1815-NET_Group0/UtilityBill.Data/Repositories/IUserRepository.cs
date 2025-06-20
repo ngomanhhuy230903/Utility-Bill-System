@@ -4,4 +4,5 @@ using UtilityBill.Data.Repositories;
 public interface IUserRepository : IGenericRepository<User>
 {
     Task<User?> GetByUsernameAsync(string username);
+    Task<User?> GetUserByIdAsync(string id);
 }

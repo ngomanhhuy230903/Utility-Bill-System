@@ -6,5 +6,6 @@ namespace UtilityBill.Data.Repositories
         IRoomRepository RoomRepository { get; }
         IUserRepository UserRepository { get; }
         Task<int> SaveChangesAsync();
+        ITenantHistoryRepository TenantHistoryRepository { get; }
     }
 }

@@ -12,5 +12,7 @@ namespace UtilityBill.Business.Services
         Task<Room> CreateRoomAsync(CreateRoomDto roomDto);
         Task<bool> UpdateRoomAsync(int roomId, CreateRoomDto roomDto);
         Task<bool> DeleteRoomAsync(int id);
+        Task<TenantHistoryDto?> AssignTenantAsync(int roomId, AssignTenantDto assignDto);
+        Task<bool> UnassignTenantAsync(int roomId);
     }
 }

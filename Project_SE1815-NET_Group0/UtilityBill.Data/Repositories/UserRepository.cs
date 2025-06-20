@@ -11,4 +11,8 @@ public class UserRepository : GenericRepository<User>, IUserRepository
     {
         return await _dbSet.FirstOrDefaultAsync(u => u.UserName.ToLower() == username.ToLower());
     }
+    public async Task<User?> GetUserByIdAsync(string id)
+    {
+        return await _dbSet.FindAsync(id);
+    }
 }

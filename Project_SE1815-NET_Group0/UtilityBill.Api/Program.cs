@@ -20,7 +20,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>(); // <-- Dịch vụ mới của chúng ta
-
+builder.Services.AddScoped<ITenantHistoryRepository, TenantHistoryRepository>();
 // Cấu hình xác thực JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => { /* ... cấu hình JWT như cũ ... */ });
