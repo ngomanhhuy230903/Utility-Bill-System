@@ -1,4 +1,4 @@
-﻿
+﻿// File: UtilityBill.Data/Repositories/UnitOfWork.cs
 using UtilityBill.Data.Context;
 
 namespace UtilityBill.Data.Repositories
@@ -7,6 +7,7 @@ namespace UtilityBill.Data.Repositories
     {
         private readonly UtilityBillDbContext _context;
         private IRoomRepository? _roomRepository;
+        private IUserRepository? _userRepository; // <-- THÊM DÒNG NÀY
 
         public UnitOfWork(UtilityBillDbContext context)
         {
@@ -14,6 +15,9 @@ namespace UtilityBill.Data.Repositories
         }
 
         public IRoomRepository RoomRepository => _roomRepository ??= new RoomRepository(_context);
+
+        // VÀ THÊM CẢ KHỐI NÀY
+        public IUserRepository UserRepository => _userRepository ??= new UserRepository(_context);
 
         public async Task<int> SaveChangesAsync()
         {

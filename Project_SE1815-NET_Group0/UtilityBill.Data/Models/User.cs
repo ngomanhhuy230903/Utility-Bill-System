@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace UtilityBill.Data.Models;
 
-public partial class User : IdentityUser
+public partial class User
 {
     public string Id { get; set; } = null!;
 
