@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UtilityBill.Business", "Uti
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UtilityBill.Data", "UtilityBill.Data\UtilityBill.Data.csproj", "{E4959554-F455-4271-BC6E-BFE1E640F8D1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UtilityBill.WebApp", "UtilityBill.WebApp\UtilityBill.WebApp.csproj", "{216422AF-7F1D-420A-9F07-DFF1806A388F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UtilityBill.WebApp", "UtilityBill.WebApp\UtilityBill.WebApp.csproj", "{216422AF-7F1D-420A-9F07-DFF1806A388F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

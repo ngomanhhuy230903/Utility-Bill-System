@@ -11,7 +11,6 @@ using UtilityBill.Data.Repositories;
 using QuestPDF.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 QuestPDF.Settings.License = LicenseType.Community;
-QuestPDF.Infrastructure.FontManager.RegisterFont(File.OpenRead(Path.Combine(AppContext.BaseDirectory, "Fonts", "Roboto-Regular.ttf")));
 // Đăng ký các dịch vụ
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<UtilityBillDbContext>(options =>
