@@ -7,5 +7,7 @@ namespace UtilityBill.Data.Repositories
         IUserRepository UserRepository { get; }
         Task<int> SaveChangesAsync();
         ITenantHistoryRepository TenantHistoryRepository { get; }
+        IMeterReadingRepository MeterReadingRepository { get; }
+        IInvoiceRepository InvoiceRepository { get; }
     }
 }
