@@ -5,5 +5,6 @@ namespace UtilityBill.Data.Repositories
     {
         Task<bool> CheckIfInvoiceExistsAsync(int roomId, int year, int month);
         Task<Invoice?> GetInvoiceWithDetailsAsync(Guid invoiceId);
+        Task<IEnumerable<Invoice>> GetAllInvoicesWithRoomAsync();
     }
 }

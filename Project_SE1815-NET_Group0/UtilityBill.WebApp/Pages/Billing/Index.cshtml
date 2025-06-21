@@ -1,0 +1,61 @@
+﻿@page
+@model UtilityBill.WebApp.Pages.Billing.IndexModel
+@{
+    ViewData["Title"] = "Quản lý Hóa đơn";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-receipt-cutoff"></i> @ViewData["Title"]</h1>
+        <form method="post" asp-page-handler="Generate">
+            <button type="submit" class="btn btn-success"><i class="bi bi-gear-fill"></i> Kích hoạt tạo hóa đơn</button>
+        </form>
+    </div>
+
+    <div class="main-content">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Kỳ HĐ</th>
+                        <th>Số phòng</th>
+                        <th>Tổng tiền (VNĐ)</th>
+                        <th>Hạn thanh toán</th>
+                        <th>Trạng thái</th>
+                        <th class="text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var invoice in Model.Invoices)
+                    {
+                        <tr>
+                            <td><strong>@invoice.InvoicePeriodMonth/@invoice.InvoicePeriodYear</strong></td>
+                            <td>@invoice.Room.RoomNumber</td>
+                            <td><strong>@invoice.TotalAmount.ToString("N0")</strong></td>
+                            <td>@invoice.DueDate.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                @if (invoice.Status == "Paid")
+                                {
+                                    <span class="badge bg-success">Đã thanh toán</span>
+                                }
+                                else if (invoice.Status == "Pending")
+                                {
+                                    <span class="badge bg-warning text-dark">Chờ thanh toán</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">@invoice.Status</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <a asp-page="./ViewPdf" asp-route-id="@invoice.Id" target="_blank" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-printer-fill"></i> Xem & In PDF
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

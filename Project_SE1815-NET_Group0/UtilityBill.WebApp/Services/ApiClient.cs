@@ -77,5 +77,38 @@ namespace UtilityBill.WebApp.Services
             var response = await client.DeleteAsync($"rooms/{id}");
             return response.IsSuccessStatusCode;
         }
+        // Thêm 2 phương thức này vào ApiClient.cs
+        public async Task<List<InvoiceDto>> GetInvoicesAsync()
+        {
+            var client = GetAuthenticatedClient();
+            try
+            {
+                return await client.GetFromJsonAsync<List<InvoiceDto>>("billing");
+            }
+            catch { return new List<InvoiceDto>(); }
+        }
+
+        public async Task<bool> TriggerInvoiceGenerationAsync()
+        {
+            var client = GetAuthenticatedClient();
+            var response = await client.PostAsync("billing/generate-invoices", null);
+            return response.IsSuccessStatusCode;
+        }
+        // Thêm phương thức này vào trong class ApiClient
+        public async Task<byte[]?> GetInvoicePdfAsync(Guid invoiceId)
+        {
+            var client = GetAuthenticatedClient();
+            try
+            {
+                // Gọi đến API và đọc nội dung trả về dưới dạng một mảng byte
+                var pdfBytes = await client.GetByteArrayAsync($"billing/{invoiceId}/pdf");
+                return pdfBytes;
+            }
+            catch (HttpRequestException)
+            {
+                // Trả về null nếu có lỗi (ví dụ: 404 Not Found)
+                return null;
+            }
+        }
     }
 }

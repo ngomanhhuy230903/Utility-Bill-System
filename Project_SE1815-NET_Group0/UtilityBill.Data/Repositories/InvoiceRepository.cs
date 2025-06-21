@@ -19,5 +19,14 @@ namespace UtilityBill.Data.Repositories
                 .Include(i => i.Room)           // Lấy thông tin phòng
                 .FirstOrDefaultAsync(i => i.Id == invoiceId);
         }
+        // Thêm vào InvoiceRepository.cs
+        public async Task<IEnumerable<Invoice>> GetAllInvoicesWithRoomAsync()
+        {
+            return await _dbSet
+                .Include(i => i.Room) // Dùng Include để lấy kèm thông tin của Room
+                .OrderByDescending(i => i.InvoicePeriodYear)
+                .ThenByDescending(i => i.InvoicePeriodMonth)
+                .ToListAsync();
+        }
     }
 }
