@@ -9,6 +9,10 @@ using UtilityBill.Business.Services;
 using UtilityBill.Data.Context;
 using UtilityBill.Data.Repositories;
 using QuestPDF.Infrastructure;
+using UtilityBill.Api.Services.Momo;
+using UtilityBill.Api.Services.VnPay;
+using UtilityBill.Data.Models.Momo;
+
 var builder = WebApplication.CreateBuilder(args);
 QuestPDF.Settings.License = LicenseType.Community;
 // Đăng ký các dịch vụ
@@ -52,6 +56,24 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add CORS to allow WebApp to access API
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowWebApp", policy =>
+    {
+        policy.WithOrigins("https://localhost:7082", "http://localhost:5164")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+//Connect MOMO API
+builder.Services.Configure<MomoOptionModel>(builder.Configuration.GetSection("MomoAPI"));
+builder.Services.AddScoped<IMomoService, MomoService>();
+//Connect VNPay API
+builder.Services.AddScoped<IVnPayService, VnPayService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -62,6 +84,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Enable CORS
+app.UseCors("AllowWebApp");
 
 app.UseAuthentication();
 app.UseAuthorization();
