@@ -1,0 +1,35 @@
+﻿@page "{roomId:int}"
+@model UtilityBill.WebApp.Pages.Rooms.AssignTenantModel
+@{
+    ViewData["Title"] = "Gán khách thuê";
+}
+
+<h1>@ViewData["Title"]</h1>
+<h4>Phòng: @Model.Room.RoomNumber</h4>
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label class="control-label">Chọn khách thuê</label>
+                <select asp-for="AssignDto.TenantId" asp-items="@Model.TenantList" class="form-control">
+                    <option value="">-- Chọn khách thuê --</option>
+                </select>
+                <span asp-validation-for="AssignDto.TenantId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="AssignDto.MoveInDate" class="control-label">Ngày chuyển vào</label>
+                <input asp-for="AssignDto.MoveInDate" type="date" class="form-control" />
+                <span asp-validation-for="AssignDto.MoveInDate" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Xác nhận gán" class="btn btn-primary" />
+                <a asp-page="./Index" class="btn btn-secondary">Quay lại danh sách</a>
+            </div>
+        </form>
+    </div>
+</div>

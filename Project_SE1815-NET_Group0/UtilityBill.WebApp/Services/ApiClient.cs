@@ -110,5 +110,23 @@ namespace UtilityBill.WebApp.Services
                 return null;
             }
         }
+        // Thêm vào ApiClient.cs
+        public async Task<List<UserDto>> GetTenantsAsync()
+        {
+            var client = GetAuthenticatedClient();
+            try
+            {
+                // API trả về List<User>, nhưng các trường cơ bản khớp với UserDto
+                return await client.GetFromJsonAsync<List<UserDto>>("users");
+            }
+            catch { return new List<UserDto>(); }
+        }
+
+        public async Task<bool> AssignTenantAsync(int roomId, AssignTenantDto assignDto)
+        {
+            var client = GetAuthenticatedClient();
+            var response = await client.PostAsJsonAsync($"rooms/{roomId}/assign-tenant", assignDto);
+            return response.IsSuccessStatusCode;
+        }
     }
 }

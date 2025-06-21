@@ -11,5 +11,9 @@ namespace UtilityBill.WebApp.Services
         Task<List<InvoiceDto>> GetInvoicesAsync();
         Task<bool> TriggerInvoiceGenerationAsync();
         Task<byte[]?> GetInvoicePdfAsync(Guid invoiceId);
+        // Dùng UserDto đã có trong WebApp/DTOs
+        Task<List<UserDto>> GetTenantsAsync();
+        Task<bool> AssignTenantAsync(int roomId, AssignTenantDto assignDto);
+        Task<UserDto?> RegisterAsync(RegisterDto registerDto);
     }
 }
