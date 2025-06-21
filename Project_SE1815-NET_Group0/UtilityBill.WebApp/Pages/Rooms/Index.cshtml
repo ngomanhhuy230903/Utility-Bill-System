@@ -46,7 +46,14 @@
                                 }
                             </td>
                             <td class="text-center action-buttons">
-                                <a asp-page="./AssignTenant" asp-route-roomId="@room.Id" class="btn btn-sm btn-info text-white"><i class="bi bi-person-plus-fill"></i> Gán khách</a>
+                                @if (room.Status == "Vacant")
+                                {
+                                    <a asp-page="./AssignTenant" asp-route-roomId="@room.Id" class="btn btn-sm btn-info text-white"><i class="bi bi-person-plus-fill"></i> Gán khách</a>
+                                }
+                                else if (room.Status == "Occupied")
+                                {
+                                    <a asp-page="./UnassignTenant" asp-route-roomId="@room.Id" class="btn btn-sm btn-secondary"><i class="bi bi-person-dash-fill"></i> Hủy gán</a>
+                                }
                                 <a asp-page="./Edit" asp-route-id="@room.Id" class="btn btn-sm btn-warning"><i class="bi bi-pencil-square"></i> Sửa</a>
                                 <a asp-page="./Delete" asp-route-id="@room.Id" class="btn btn-sm btn-danger"><i class="bi bi-trash3-fill"></i> Xóa</a>
                             </td>

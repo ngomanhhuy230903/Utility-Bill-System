@@ -128,5 +128,21 @@ namespace UtilityBill.WebApp.Services
             var response = await client.PostAsJsonAsync($"rooms/{roomId}/assign-tenant", assignDto);
             return response.IsSuccessStatusCode;
         }
+        public async Task<UserDto?> RegisterAsync(RegisterDto registerDto)
+        {
+            var client = _httpClientFactory.CreateClient("ApiClient");
+            var response = await client.PostAsJsonAsync("auth/register", registerDto);
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<UserDto>();
+            }
+            return null;
+        }
+        public async Task<bool> UnassignTenantAsync(int roomId)
+        {
+            var client = GetAuthenticatedClient();
+            var response = await client.PostAsync($"rooms/{roomId}/unassign-tenant", null);
+            return response.IsSuccessStatusCode;
+        }
     }
 }

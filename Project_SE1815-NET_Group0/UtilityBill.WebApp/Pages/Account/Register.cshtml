@@ -1,0 +1,39 @@
+﻿@page
+@model UtilityBill.WebApp.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Đăng ký";
+}
+<h1>@ViewData["Title"]</h1>
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <hr />
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.UserName" class="form-control" />
+                <label asp-for="Input.UserName">Tên đăng nhập</label>
+                <span asp-validation-for="Input.UserName" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.FullName" class="form-control" />
+                <label asp-for="Input.FullName">Họ và tên</label>
+                <span asp-validation-for="Input.FullName" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Email" class="form-control" />
+                <label asp-for="Input.Email">Email</label>
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.PhoneNumber" class="form-control" />
+                <label asp-for="Input.PhoneNumber">Số điện thoại</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Password" class="form-control" type="password" />
+                <label asp-for="Input.Password">Mật khẩu</label>
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Đăng ký</button>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,18 @@
+﻿@page "{roomId:int}"
+@model UtilityBill.WebApp.Pages.Rooms.UnassignTenantModel
+@{
+    ViewData["Title"] = "Xác nhận hủy gán khách";
+}
+
+<h1>@ViewData["Title"]</h1>
+<h3>Bạn có chắc chắn muốn ghi nhận khách thuê đã chuyển đi khỏi phòng này không?</h3>
+<div>
+    <h4>Phòng: @Model.Room.RoomNumber</h4>
+    <hr />
+    <p>Thao tác này sẽ cập nhật ngày chuyển đi cho khách thuê hiện tại và chuyển trạng thái phòng thành "Còn trống".</p>
+
+    <form method="post">
+        <input type="submit" value="Xác nhận" class="btn btn-danger" />
+        <a asp-page="./Index" class="btn btn-secondary">Hủy</a>
+    </form>
+</div>
