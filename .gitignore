@@ -404,3 +404,13 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/Project_SE1815-NET_Group0/.idea/.idea.Project_SE1815-NET_Group0/.idea/.gitignore
+/Project_SE1815-NET_Group0/.idea/config/applicationhost.config
+/Project_SE1815-NET_Group0/.idea/.idea.Project_SE1815-NET_Group0/.idea/dataSources.xml
+/Project_SE1815-NET_Group0/.idea/.idea.Project_SE1815-NET_Group0/.idea/encodings.xml
+/fix_passwords.sql
+/generate_correct_hash.cs
+/Project_SE1815-NET_Group0/.idea/.idea.Project_SE1815-NET_Group0/.idea/indexLayout.xml
+/Project_SE1815-NET_Group0/.idea/.idea.Project_SE1815-NET_Group0/.idea/sqldialects.xml
+/test_db_connection.sql
+/Project_SE1815-NET_Group0/.idea/.idea.Project_SE1815-NET_Group0/.idea/vcs.xml
