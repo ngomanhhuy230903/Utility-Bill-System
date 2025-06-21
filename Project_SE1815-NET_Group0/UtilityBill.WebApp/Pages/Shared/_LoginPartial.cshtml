@@ -4,6 +4,9 @@
     @if (User.Identity.IsAuthenticated)
     {
         <li class="nav-item">
+            <a class="nav-link text-dark" href="/Cart">🛒 Cart</a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link text-dark" title="Manage">Xin chào, @User.Identity.Name!</a>
         </li>
         <li class="nav-item">

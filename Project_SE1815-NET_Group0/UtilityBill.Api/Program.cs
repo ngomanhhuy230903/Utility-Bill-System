@@ -9,6 +9,10 @@ using UtilityBill.Business.Services;
 using UtilityBill.Data.Context;
 using UtilityBill.Data.Repositories;
 using QuestPDF.Infrastructure;
+using UtilityBill.Api.Services.Momo;
+using UtilityBill.Api.Services.VnPay;
+using UtilityBill.Data.Models.Momo;
+
 using UtilityBill.Business.Settings;
 using Microsoft.AspNetCore.Identity;
 using UtilityBill.Data.Models;
@@ -76,15 +80,23 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add CORS to allow WebApp to access API
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy("AllowWebApp", policy =>
     {
-        policy.WithOrigins("https://localhost:7082") // nếu thay đổi port FE thì cần cập nhật lại
+        policy.WithOrigins("https://localhost:7082", "http://localhost:5164")
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
+
+//Connect MOMO API
+builder.Services.Configure<MomoOptionModel>(builder.Configuration.GetSection("MomoAPI"));
+builder.Services.AddScoped<IMomoService, MomoService>();
+//Connect VNPay API
+builder.Services.AddScoped<IVnPayService, VnPayService>();
 
 // Thêm Hangfire vào DI container
 builder.Services.AddHangfire(config =>
@@ -106,6 +118,10 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors(MyAllowSpecificOrigins);
 app.UseCors("AllowFrontend");
+
+// Enable CORS
+app.UseCors("AllowWebApp");
+
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -174,10 +174,10 @@ INSERT INTO Roles (Id, Name) VALUES
 -- Khi tạo user trong app, hãy dùng `UserManager.CreateAsync(user, password)`
 DELETE FROM Users;
 INSERT INTO Users (Id, UserName, Email, PasswordHash, FullName, PhoneNumber, IsActive) VALUES
-('admin-user-guid', 'admin', 'admin@email.com', '123', 'Quản Trị Viên', '0987654321', 1),
-('tenant1-user-guid', 'nguyenvana', 'nguyenvana@email.com', '123', 'Nguyễn Văn A', '0123456789', 1),
-('tenant2-user-guid', 'tranvanb', 'tranvanb@email.com', '123', 'Trần Văn B', '0123456788', 1),
-('tenant3-user-guid', 'lethic', 'lethic@email.com', '123', 'Lê Thị C', '0123456787', 1);
+('admin-user-guid', 'admin', 'admin@email.com', '$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Quản Trị Viên', '0987654321', 1),
+('tenant1-user-guid', 'nguyenvana', 'nguyenvana@email.com', '$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Nguyễn Văn A', '0123456789', 1),
+('tenant2-user-guid', 'tranvanb', 'tranvanb@email.com', '$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Trần Văn B', '0123456788', 1),
+('tenant3-user-guid', 'lethic', 'lethic@email.com', '$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Lê Thị C', '0123456787', 1);
 
 -- 3. Phân quyền cho người dùng (UserRoles)
 INSERT INTO UserRoles (UserId, RoleId) VALUES
@@ -190,14 +190,14 @@ INSERT INTO UserRoles (UserId, RoleId) VALUES
 -- 4. Dữ liệu phòng trọ (Rooms)
 DELETE FROM TenantHistories;
 DELETE FROM Rooms;
-SET IDENTITY_INSERT dbo.Rooms ON;
-INSERT INTO Rooms (Id, RoomNumber, Block, Floor, Area, Price, QRCodeData, Status) VALUES
+SET IDENTITY_INSERT Rooms ON;
+INSERT INTO Rooms (Id, RoomNumber, Block, Floor, Area, Price, QRCodeData, Status)VALUES
 (101, 'P101', 'A', 1, 25.5, 3000000, 'QR-ROOM-101', 'Occupied'),
 (102, 'P102', 'A', 1, 22.0, 2800000, 'QR-ROOM-102', 'Occupied'),
 (201, 'P201', 'A', 2, 30.0, 3500000, 'QR-ROOM-201', 'Occupied'),
 (202, 'P202', 'A', 2, 25.5, 3000000, 'QR-ROOM-202', 'Vacant'),
 (301, 'P301', 'B', 3, 28.0, 3200000, 'QR-ROOM-301', 'Maintenance');
-SET IDENTITY_INSERT dbo.Rooms OFF;
+SET IDENTITY_INSERT Rooms OFF;
 
 
 -- 5. Lịch sử thuê phòng (TenantHistories) -> Gán khách vào phòng
