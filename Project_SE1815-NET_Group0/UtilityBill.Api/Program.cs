@@ -9,6 +9,9 @@ using UtilityBill.Business.Services;
 using UtilityBill.Data.Context;
 using UtilityBill.Data.Repositories;
 using QuestPDF.Infrastructure;
+using UtilityBill.Business.Settings;
+using Microsoft.AspNetCore.Identity;
+using UtilityBill.Data.Models;
 var builder = WebApplication.CreateBuilder(args);
 QuestPDF.Settings.License = LicenseType.Community;
 // Đăng ký các dịch vụ
@@ -25,6 +28,10 @@ builder.Services.AddScoped<IMeterReadingRepository, MeterReadingRepository>();
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 builder.Services.AddSingleton<IBillingConfigService, BillingConfigService>(); // Thêm lại dòng này nếu bạn đã xóa
 builder.Services.AddScoped<IPdfService, PdfService>();
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+// Thay thế đăng ký Email Service cũ bằng cái mới
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 // Đăng ký service nghiệp vụ
 builder.Services.AddScoped<IBillingService, BillingService>();
 

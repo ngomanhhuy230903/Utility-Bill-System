@@ -14,14 +14,16 @@ namespace UtilityBill.Business.Services
 {
     public class TokenService : ITokenService
     {
-        private readonly SymmetricSecurityKey _key;
         private readonly IConfiguration _config;
-        // Xóa UserManager khỏi đây
+        private readonly SymmetricSecurityKey _key;
+        private readonly string _issuer;
+        private readonly string _audience;
 
         public TokenService(IConfiguration config)
         {
-            _config = config;
-            _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            _issuer = config["Jwt:Issuer"];
+            _audience = config["Jwt:Audience"];
+            _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]));
         }
 
         public Task<string> CreateToken(User user)
@@ -46,6 +48,51 @@ namespace UtilityBill.Business.Services
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return Task.FromResult(tokenHandler.WriteToken(token));
+        }
+        public string GeneratePasswordResetToken(User user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.NameId, user.Id),
+                new Claim("purpose", "password-reset") // Claim đặc biệt để nhận dạng
+            };
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddMinutes(15),
+                SigningCredentials = new SigningCredentials(_key, SecurityAlgorithms.HmacSha512Signature),
+                Issuer = _issuer,
+                Audience = _audience
+            };
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
+
+        // Xác thực token reset
+        public ClaimsPrincipal? ValidatePasswordResetToken(string token)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = _key,
+                    ValidateIssuer = true,
+                    ValidIssuer = _issuer,
+                    ValidateAudience = true,
+                    ValidAudience = _audience,
+                    ClockSkew = TimeSpan.Zero
+                }, out SecurityToken validatedToken);
+
+                if (!principal.HasClaim(c => c.Type == "purpose" && c.Value == "password-reset"))
+                {
+                    return null; // Đây không phải token reset
+                }
+                return principal;
+            }
+            catch { return null; } // Token không hợp lệ
         }
     }
 }

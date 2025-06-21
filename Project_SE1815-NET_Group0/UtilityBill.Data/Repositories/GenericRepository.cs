@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using UtilityBill.Data.Context;
 
 namespace UtilityBill.Data.Repositories
@@ -37,6 +38,10 @@ namespace UtilityBill.Data.Repositories
         public void Update(T entity)
         {
             _dbSet.Update(entity);
+        }
+        public async Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _dbSet.FirstOrDefaultAsync(predicate);
         }
     }
 }

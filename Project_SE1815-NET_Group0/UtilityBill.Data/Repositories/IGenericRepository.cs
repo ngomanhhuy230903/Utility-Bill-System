@@ -1,4 +1,6 @@
-﻿namespace UtilityBill.Data.Repositories
+﻿using System.Linq.Expressions;
+
+namespace UtilityBill.Data.Repositories
 {
     public interface IGenericRepository<T> where T : class
     {
@@ -7,5 +9,6 @@
         Task AddAsync(T entity);
         void Update(T entity);
         void Delete(T entity);
+        Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate);
     }
 }

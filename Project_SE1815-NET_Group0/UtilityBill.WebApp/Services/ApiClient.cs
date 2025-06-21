@@ -156,5 +156,21 @@ namespace UtilityBill.WebApp.Services
                 return new List<TenantHistoryDto>();
             }
         }
+        // Thêm 2 phương thức này vào ApiClient.cs
+        public async Task<bool> ForgotPasswordAsync(ForgotPasswordDto dto)
+        {
+            // Endpoint này không cần xác thực
+            var client = _httpClientFactory.CreateClient("ApiClient");
+            var response = await client.PostAsJsonAsync("auth/forgot-password", dto);
+            return response.IsSuccessStatusCode;
+        }
+
+        public async Task<bool> ResetPasswordAsync(ResetPasswordDto dto)
+        {
+            // Endpoint này không cần xác thực
+            var client = _httpClientFactory.CreateClient("ApiClient");
+            var response = await client.PostAsJsonAsync("auth/reset-password", dto);
+            return response.IsSuccessStatusCode;
+        }
     }
 }
