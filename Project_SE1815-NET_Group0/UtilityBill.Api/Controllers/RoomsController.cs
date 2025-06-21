@@ -5,6 +5,7 @@ using UtilityBill.Business.Services;
 using UtilityBill.Data.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using UtilityBill.Data.Repositories;
 
 namespace UtilityBill.Api.Controllers
 {
@@ -12,10 +13,11 @@ namespace UtilityBill.Api.Controllers
     public class RoomsController : BaseApiController
     {
         private readonly IRoomService _roomService;
-
-        public RoomsController(IRoomService roomService)
+        private readonly IUnitOfWork _unitOfWork;
+        public RoomsController(IRoomService roomService, IUnitOfWork unitOfWork)
         {
             _roomService = roomService;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet] // GET: api/rooms
@@ -97,6 +99,27 @@ namespace UtilityBill.Api.Controllers
                 return BadRequest("Không thể hủy gán. Phòng không tồn tại hoặc không có người ở.");
             }
             return NoContent(); // Thành công
+        }
+        // Thêm action này vào RoomsController.cs
+
+        [HttpGet("{roomId}/history")]
+        public async Task<IActionResult> GetRoomHistory(int roomId)
+        {
+            var historiesFromDb = await _unitOfWork.TenantHistoryRepository.GetHistoriesByRoomIdAsync(roomId);
+
+            // Map từ List<TenantHistory> sang List<TenantHistoryDto>
+            var historyDtos = historiesFromDb.Select(h => new TenantHistoryDto
+            {
+                Id = h.Id,
+                RoomId = h.RoomId,
+                TenantId = h.TenantId,
+                // Kiểm tra null cho Tenant để tránh lỗi
+                TenantName = h.Tenant?.FullName ?? "N/A",
+                MoveInDate = h.MoveInDate,
+                MoveOutDate = h.MoveOutDate
+            }).ToList();
+
+            return Ok(historyDtos);
         }
     }
 }

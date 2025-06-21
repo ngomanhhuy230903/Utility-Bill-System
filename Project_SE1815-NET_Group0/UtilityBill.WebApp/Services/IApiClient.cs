@@ -16,5 +16,6 @@ namespace UtilityBill.WebApp.Services
         Task<bool> AssignTenantAsync(int roomId, AssignTenantDto assignDto);
         Task<UserDto?> RegisterAsync(RegisterDto registerDto);
         Task<bool> UnassignTenantAsync(int roomId);
+        Task<List<TenantHistoryDto>> GetRoomHistoryAsync(int roomId);
     }
 }

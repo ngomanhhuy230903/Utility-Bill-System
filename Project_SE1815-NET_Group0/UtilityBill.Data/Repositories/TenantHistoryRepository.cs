@@ -16,5 +16,14 @@ namespace UtilityBill.Data.Repositories
         {
             return await _dbSet.FirstOrDefaultAsync(th => th.RoomId == roomId && th.MoveOutDate == null);
         }
+        // Thêm vào TenantHistoryRepository.cs
+        public async Task<IEnumerable<TenantHistory>> GetHistoriesByRoomIdAsync(int roomId)
+        {
+            return await _dbSet
+                .Where(th => th.RoomId == roomId)
+                .Include(th => th.Tenant) // Lấy kèm thông tin của khách thuê (User)
+                .OrderByDescending(th => th.MoveInDate)
+                .ToListAsync();
+        }
     }
 }

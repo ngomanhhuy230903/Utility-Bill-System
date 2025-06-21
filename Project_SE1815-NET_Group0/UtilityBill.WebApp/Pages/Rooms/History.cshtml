@@ -1,0 +1,57 @@
+﻿@page "{roomId:int}"
+@model UtilityBill.WebApp.Pages.Rooms.HistoryModel
+@{
+    ViewData["Title"] = "Lịch sử thuê phòng";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-clock-history"></i> @ViewData["Title"]: <span class="text-primary">@Model.Room.RoomNumber</span></h1>
+        <a asp-page="./Index" class="btn btn-secondary"><i class="bi bi-arrow-left-circle"></i> Quay lại danh sách</a>
+    </div>
+
+    <div class="main-content">
+        @if (Model.Histories.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>STT</th>
+                            <th>Tên khách thuê</th>
+                            <th>Ngày chuyển vào</th>
+                            <th>Ngày chuyển đi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.Histories.Count; i++)
+                        {
+                            var history = Model.Histories[i];
+                            <tr>
+                                <td>@(i + 1)</td>
+                                <td><strong>@history.TenantName</strong></td>
+                                <td>@history.MoveInDate.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    @if (history.MoveOutDate.HasValue)
+                                    {
+                                        @history.MoveOutDate.Value.ToString("dd/MM/yyyy")
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Đang ở</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info" role="alert">
+                Chưa có lịch sử thuê cho phòng này.
+            </div>
+        }
+    </div>
+</div>  

@@ -48,14 +48,15 @@
                             <td class="text-center action-buttons">
                                 @if (room.Status == "Vacant")
                                 {
-                                    <a asp-page="./AssignTenant" asp-route-roomId="@room.Id" class="btn btn-sm btn-info text-white"><i class="bi bi-person-plus-fill"></i> Gán khách</a>
+                                    <a asp-page="./AssignTenant" asp-route-roomId="@room.Id" class="btn btn-sm btn-info text-white" title="Gán khách"><i class="bi bi-person-plus-fill"></i></a>
                                 }
                                 else if (room.Status == "Occupied")
                                 {
-                                    <a asp-page="./UnassignTenant" asp-route-roomId="@room.Id" class="btn btn-sm btn-secondary"><i class="bi bi-person-dash-fill"></i> Hủy gán</a>
+                                    <a asp-page="./UnassignTenant" asp-route-roomId="@room.Id" class="btn btn-sm btn-secondary" title="Hủy gán"><i class="bi bi-person-dash-fill"></i></a>
                                 }
-                                <a asp-page="./Edit" asp-route-id="@room.Id" class="btn btn-sm btn-warning"><i class="bi bi-pencil-square"></i> Sửa</a>
-                                <a asp-page="./Delete" asp-route-id="@room.Id" class="btn btn-sm btn-danger"><i class="bi bi-trash3-fill"></i> Xóa</a>
+                                <a asp-page="./History" asp-route-roomId="@room.Id" class="btn btn-sm btn-outline-primary" title="Xem lịch sử"><i class="bi bi-clock-history"></i></a>
+                                <a asp-page="./Edit" asp-route-id="@room.Id" class="btn btn-sm btn-warning" title="Sửa"><i class="bi bi-pencil-square"></i></a>
+                                <a asp-page="./Delete" asp-route-id="@room.Id" class="btn btn-sm btn-danger" title="Xóa"><i class="bi bi-trash3-fill"></i></a>
                             </td>
                         </tr>
                     }

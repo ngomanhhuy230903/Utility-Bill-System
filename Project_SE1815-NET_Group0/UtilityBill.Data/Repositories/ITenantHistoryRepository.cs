@@ -7,5 +7,6 @@ namespace UtilityBill.Data.Repositories
     public interface ITenantHistoryRepository : IGenericRepository<TenantHistory>
     {
         Task<TenantHistory?> GetCurrentHistoryByRoomIdAsync(int roomId);
+        Task<IEnumerable<TenantHistory>> GetHistoriesByRoomIdAsync(int roomId);
     }
 }

@@ -144,5 +144,17 @@ namespace UtilityBill.WebApp.Services
             var response = await client.PostAsync($"rooms/{roomId}/unassign-tenant", null);
             return response.IsSuccessStatusCode;
         }
+        public async Task<List<TenantHistoryDto>> GetRoomHistoryAsync(int roomId)
+        {
+            var client = GetAuthenticatedClient();
+            try
+            {
+                return await client.GetFromJsonAsync<List<TenantHistoryDto>>($"rooms/{roomId}/history");
+            }
+            catch
+            {
+                return new List<TenantHistoryDto>();
+            }
+        }
     }
 }
