@@ -5,7 +5,7 @@ using UtilityBill.WebApp.Services;
 
 namespace UtilityBill.WebApp.Pages.Rooms
 {
-    [Authorize] // Bắt buộc phải đăng nhập để vào trang này
+    [Authorize]
     public class IndexModel : PageModel
     {
         private readonly IApiClient _apiClient;
@@ -19,6 +19,7 @@ namespace UtilityBill.WebApp.Pages.Rooms
 
         public async Task OnGetAsync()
         {
+            // Lấy dữ liệu từ API và gán vào Rooms để View có thể hiển thị
             Rooms = await _apiClient.GetRoomsAsync();
         }
     }

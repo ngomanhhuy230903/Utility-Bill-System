@@ -1,0 +1,51 @@
+﻿@page "{id:int}"
+@model UtilityBill.WebApp.Pages.Rooms.EditModel
+@{
+    ViewData["Title"] = "Chỉnh sửa phòng";
+}
+
+<h1>@ViewData["Title"]</h1>
+<h4>Phòng: @Model.Room.RoomNumber</h4>
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            @* Thuộc tính asp-for="Room.RoomNumber" sẽ tự động lấy giá trị từ Model.Room.RoomNumber để điền vào ô input *@
+            <div class="mb-3">
+                <label asp-for="Room.RoomNumber" class="control-label">Số phòng</label>
+                <input asp-for="Room.RoomNumber" class="form-control" />
+                <span asp-validation-for="Room.RoomNumber" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Room.Block" class="control-label">Block/Dãy</label>
+                <input asp-for="Room.Block" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="Room.Floor" class="control-label">Tầng</label>
+                <input asp-for="Room.Floor" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="Room.Area" class="control-label">Diện tích (m²)</label>
+                <input asp-for="Room.Area" class="form-control" />
+                <span asp-validation-for="Room.Area" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Room.Price" class="control-label">Giá thuê (VNĐ)</label>
+                <input asp-for="Room.Price" class="form-control" />
+                <span asp-validation-for="Room.Price" class="text-danger"></span>
+            </div>
+            <div class="form-group mt-3">
+                <input type="submit" value="Lưu thay đổi" class="btn btn-primary" />
+                <a asp-page="./Index" class="btn btn-secondary">Quay lại danh sách</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

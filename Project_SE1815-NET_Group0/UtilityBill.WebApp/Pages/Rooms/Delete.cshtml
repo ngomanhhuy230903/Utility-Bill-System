@@ -1,0 +1,26 @@
+﻿@page "{id:int}"
+@model UtilityBill.WebApp.Pages.Rooms.DeleteModel
+@{
+    ViewData["Title"] = "Xác nhận xóa";
+}
+
+<h1>@ViewData["Title"]</h1>
+<h3>Bạn có chắc chắn muốn xóa phòng này không?</h3>
+<div>
+    <h4>Phòng: @Model.Room.RoomNumber</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">Số phòng</dt>
+        <dd class="col-sm-10">@Model.Room.RoomNumber</dd>
+        <dt class="col-sm-2">Block</dt>
+        <dd class="col-sm-10">@Model.Room.Block</dd>
+        <dt class="col-sm-2">Giá</dt>
+        <dd class="col-sm-10">@Model.Room.Price.ToString("N0") VNĐ</dd>
+    </dl>
+
+    <form method="post">
+        <input type="hidden" asp-for="Room.Id" />
+        <input type="submit" value="Xóa" class="btn btn-danger" />
+        <a asp-page="./Index" class="btn btn-secondary">Hủy</a>
+    </form>
+</div>

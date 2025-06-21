@@ -45,5 +45,37 @@ namespace UtilityBill.WebApp.Services
                 return new List<RoomDto>();
             }
         }
+        // Thêm các phương thức này vào bên trong class ApiClient
+
+        public async Task<RoomDto?> GetRoomByIdAsync(int id)
+        {
+            var client = GetAuthenticatedClient();
+            return await client.GetFromJsonAsync<RoomDto>($"rooms/{id}");
+        }
+
+        public async Task<RoomDto?> CreateRoomAsync(CreateRoomDto room)
+        {
+            var client = GetAuthenticatedClient();
+            var response = await client.PostAsJsonAsync("rooms", room);
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<RoomDto>();
+            }
+            return null;
+        }
+
+        public async Task<bool> UpdateRoomAsync(int id, UpdateRoomDto room)
+        {
+            var client = GetAuthenticatedClient();
+            var response = await client.PutAsJsonAsync($"rooms/{id}", room);
+            return response.IsSuccessStatusCode;
+        }
+
+        public async Task<bool> DeleteRoomAsync(int id)
+        {
+            var client = GetAuthenticatedClient();
+            var response = await client.DeleteAsync($"rooms/{id}");
+            return response.IsSuccessStatusCode;
+        }
     }
 }
