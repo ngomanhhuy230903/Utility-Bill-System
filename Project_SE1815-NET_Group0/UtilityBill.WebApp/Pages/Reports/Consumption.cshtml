@@ -1,0 +1,78 @@
+﻿@page
+@model UtilityBill.WebApp.Pages.Reports.ConsumptionModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+}
+
+<h2>Báo cáo tiêu thụ</h2>
+
+<form id="filter-form" class="mb-4">
+    <label>From: <input type="date" name="from" required /></label>
+    <label>To: <input type="date" name="to" required /></label>
+    <label>
+        Group By:
+        <select name="groupBy">
+            <option value="day">Theo ngày</option>
+            <option value="month">Theo tháng</option>
+            <option value="year">Theo năm</option>
+        </select>
+    </label>
+    <button type="submit" class="btn btn-primary">Lọc</button>
+    <button id="export-consumption" class="btn btn-outline-secondary">Export Consumption</button>
+</form>
+
+<div class="row">
+    <div class="col-md-12">
+        <h4>Tiêu thụ điện/nước</h4>
+        <canvas id="consumptionChart" height="200"></canvas>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        const apiBase = '@Configuration["ApiBaseUrl"]';
+
+        const consumptionChart = new Chart(document.getElementById('consumptionChart'), {
+            type: 'bar',
+            data: { labels: [], datasets: [] },
+            options: { responsive: true }
+        });
+
+        $('#filter-form').on('submit', function (e) {
+            e.preventDefault();
+            const form = $(this);
+            const params = form.serialize();
+
+            $.getJSON(`${apiBase}/reports/consumption?${params}`, function (data) {
+                const labels = data.map(x => x.period);
+                const electric = data.map(x => x.totalElectric);
+                const water = data.map(x => x.totalWater);
+
+                consumptionChart.data = {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Điện (kWh)', backgroundColor: '#42a5f5', data: electric },
+                        { label: 'Nước (m³)', backgroundColor: '#66bb6a', data: water }
+                    ]
+                };
+                consumptionChart.update();
+            });
+        });
+
+        $('#export-consumption').on('click', function (e) {
+            e.preventDefault();
+            const query = $('#filter-form').serialize();
+            window.location = `${apiBase}/reports/export-consumption?${query}`;
+        });
+
+        // Auto load today's report
+        $(function () {
+            const today = new Date().toISOString().slice(0, 10);
+            $('input[name="from"]').val(today);
+            $('input[name="to"]').val(today);
+            $('#filter-form').submit();
+        });
+    </script>
+}

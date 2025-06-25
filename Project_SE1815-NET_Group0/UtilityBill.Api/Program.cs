@@ -12,6 +12,9 @@ using QuestPDF.Infrastructure;
 using UtilityBill.Business.Settings;
 using Microsoft.AspNetCore.Identity;
 using UtilityBill.Data.Models;
+using Hangfire;
+using Hangfire.MemoryStorage;
+
 var builder = WebApplication.CreateBuilder(args);
 QuestPDF.Settings.License = LicenseType.Community;
 // Đăng ký các dịch vụ
@@ -22,10 +25,13 @@ builder.Services.AddDbContext<UtilityBillDbContext>(options =>
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IMaintenanceScheduleService, MaintenanceScheduleService>();
 builder.Services.AddScoped<ITenantHistoryRepository, TenantHistoryRepository>();
 builder.Services.AddScoped<IMeterReadingRepository, MeterReadingRepository>();
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+//builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddSingleton<IBillingConfigService, BillingConfigService>(); // Thêm lại dòng này nếu bạn đã xóa
 builder.Services.AddScoped<IPdfService, PdfService>();
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
@@ -70,6 +76,24 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("https://localhost:7082") // nếu thay đổi port FE thì cần cập nhật lại
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// Thêm Hangfire vào DI container
+builder.Services.AddHangfire(config =>
+{
+    config.UseMemoryStorage(); // Hoặc UseSqlServerStorage(...) nếu dùng SQL Server
+});
+builder.Services.AddHangfireServer(); // Cho phép chạy background jobs
+builder.Services.AddScoped<MaintenanceReminderJob>(); // Đăng ký job nếu dùng DI
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -81,9 +105,22 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors(MyAllowSpecificOrigins);
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Kích hoạt Hangfire Dashboard (tùy chọn, hữu ích để debug)
+app.UseHangfireDashboard("/hangfire"); // => https://localhost:7240/hangfire
+
 app.MapControllers();
+
+RecurringJob.AddOrUpdate<MaintenanceReminderJob>(
+    "maintenance-reminder",
+    job => job.Execute(),
+    Cron.Daily,
+    new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.Local
+    });
 
 app.Run();
