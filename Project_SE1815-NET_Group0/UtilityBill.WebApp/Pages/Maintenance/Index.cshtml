@@ -1,0 +1,112 @@
+﻿@page
+@model UtilityBill.WebApp.Pages.Maintenance.IndexModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    
+}
+
+<div class="mb-4">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#scheduleModal">Lên lịch bảo trì</button>
+</div>
+
+<div id="calendar"></div>
+
+<h4 class="mt-4">Lịch bảo trì trong tháng</h4>
+<table class="table table-bordered" style="margin-bottom: 100px;">
+    <thead>
+        <tr><th>Tiêu đề</th><th>Phòng/Block</th><th>Thời gian</th><th>Trạng thái</th></tr>
+    </thead>
+    <tbody id="schedule-table-body"></tbody>
+</table>
+
+<!-- Modal Lên lịch mới -->
+<div class="modal fade" id="scheduleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form id="schedule-form" class="modal-content">
+            <div class="modal-header"><h5>Lên lịch bảo trì</h5></div>
+            <div class="modal-body">
+                <label>Tiêu đề: <input name="title" class="form-control" required /></label>
+                <label>Phòng ID (optional): <input name="roomId" type="number" class="form-control" /></label>
+                <label>Block (optional): <input name="block" class="form-control" /></label>
+                <label>Thời gian bắt đầu: <input name="scheduledStart" type="datetime-local" class="form-control" required /></label>
+                <label>Thời gian kết thúc: <input name="scheduledEnd" type="datetime-local" class="form-control" required /></label>
+                <label>Mô tả: <textarea name="description" class="form-control"></textarea></label>
+                <input type="hidden" name="createdByUserId" value="@User.FindFirst("sub")?.Value" />
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-success">Lưu</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <script>
+        const apiBase = '@Configuration["ApiBaseUrl"]';
+        const calendarEl = document.getElementById('calendar');
+        let calendar;
+
+        function loadCalendar(year, month) {
+            fetch(`${apiBase}/maintenance/calendar?year=${year}&month=${month + 1}`)
+                .then(r => r.json())
+                .then(events => {
+                    calendar.removeAllEvents();
+                    events.forEach(e => calendar.addEvent({
+                        id: e.id,
+                        title: e.title,
+                        start: e.start,
+                        end: e.end,
+                        backgroundColor: e.backgroundColor
+                    }));
+                });
+
+            fetch(`${apiBase}/maintenance/list?year=${year}&month=${month + 1}`)
+                .then(r => r.json())
+                .then(list => {
+                    const tbody = $('#schedule-table-body');
+                    tbody.empty();
+                    list.forEach(i => {
+                        tbody.append(`<tr>
+                            <td>${i.title}</td>
+                            <td>${i.roomId || i.block || '-'}</td>
+                            <td>${new Date(i.scheduledStart).toLocaleString()} - ${new Date(i.scheduledEnd).toLocaleString()}</td>
+                            <td>${i.status}</td>
+                        </tr>`);
+                    });
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'vi',
+                dateClick: function (info) {
+                    $('#scheduleModal').modal('show');
+                },
+                datesSet: function (info) {
+                    const d = info.start;
+                    loadCalendar(d.getFullYear(), d.getMonth());
+                }
+            });
+            calendar.render();
+        });
+
+        $('#schedule-form').on('submit', function (e) {
+            e.preventDefault();
+            const data = $(this).serializeArray().reduce((obj, item) => {
+                obj[item.name] = item.value;
+                return obj;
+            }, {});
+            fetch(`${apiBase}/maintenance/create`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(() => {
+                $('#scheduleModal').modal('hide');
+                calendar.refetchEvents();
+            });
+        });
+    </script>
+}

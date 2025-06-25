@@ -1,0 +1,76 @@
+﻿@page
+@model UtilityBill.WebApp.Pages.Reports.RevenueModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+}
+
+<h2>Báo cáo doanh thu</h2>
+
+<form id="filter-form" class="mb-4">
+    <label>From: <input type="date" name="from" required /></label>
+    <label>To: <input type="date" name="to" required /></label>
+    <label>
+        Group By:
+        <select name="groupBy">
+            <option value="day">Theo ngày</option>
+            <option value="month">Theo tháng</option>
+            <option value="year">Theo năm</option>
+        </select>
+    </label>
+    <button type="submit" class="btn btn-primary">Lọc</button>
+    <button id="export-revenue" class="btn btn-outline-secondary">Export Revenue</button>
+</form>
+
+<div class="row">
+    <div class="col-md-12">
+        <h4>Doanh thu</h4>
+        <canvas id="revenueChart" height="200"></canvas>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        const apiBase = '@Configuration["ApiBaseUrl"]';
+
+        const revenueChart = new Chart(document.getElementById('revenueChart'), {
+            type: 'line',
+            data: { labels: [], datasets: [] },
+            options: { responsive: true }
+        });
+
+        $('#filter-form').on('submit', function (e) {
+            e.preventDefault();
+            const form = $(this);
+            const params = form.serialize();
+
+            $.getJSON(`${apiBase}/reports/revenue?${params}`, function (data) {
+                const labels = data.map(x => x.period);
+                const revenue = data.map(x => x.totalRevenue);
+
+                revenueChart.data = {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Doanh thu (VND)', borderColor: '#ff7043', data: revenue, fill: false }
+                    ]
+                };
+                revenueChart.update();
+            });
+        });
+
+        $('#export-revenue').on('click', function (e) {
+            e.preventDefault();
+            const query = $('#filter-form').serialize();
+            window.location = `${apiBase}/reports/export-revenue?${query}`;
+        });
+
+        // Auto load today's report
+        $(function () {
+            const today = new Date().toISOString().slice(0, 10);
+            $('input[name="from"]').val(today);
+            $('input[name="to"]').val(today);
+            $('#filter-form').submit();
+        });
+    </script>
+}

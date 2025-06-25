@@ -9,5 +9,8 @@ namespace UtilityBill.Data.Repositories
         ITenantHistoryRepository TenantHistoryRepository { get; }
         IMeterReadingRepository MeterReadingRepository { get; }
         IInvoiceRepository InvoiceRepository { get; }
+        IPaymentRepository PaymentRepository { get; }
+        IMaintenanceScheduleRepository MaintenanceScheduleRepository { get; }
+        INotificationRepository NotificationRepository { get; }
     }
 }

@@ -11,6 +11,10 @@ namespace UtilityBill.Data.Repositories
         private ITenantHistoryRepository? _tenantHistoryRepository;
         private IMeterReadingRepository? _meterReadingRepository;
         private IInvoiceRepository? _invoiceRepository;
+        private IPaymentRepository? _paymentRepository;
+        private IMaintenanceScheduleRepository? _maintenanceScheduleRepository;
+        private INotificationRepository? _notificationRepository;
+
         public UnitOfWork(UtilityBillDbContext context)
         {
             _context = context;
@@ -24,6 +28,12 @@ namespace UtilityBill.Data.Repositories
         public ITenantHistoryRepository TenantHistoryRepository => _tenantHistoryRepository ??= new TenantHistoryRepository(_context);
         public IMeterReadingRepository MeterReadingRepository => _meterReadingRepository ??= new MeterReadingRepository(_context);
         public IInvoiceRepository InvoiceRepository => _invoiceRepository ??= new InvoiceRepository(_context);
+
+        public IPaymentRepository PaymentRepository => _paymentRepository ??= new PaymentRepository(_context);
+
+        public IMaintenanceScheduleRepository MaintenanceScheduleRepository => _maintenanceScheduleRepository ??= new MaintenanceScheduleRepository(_context);
+
+        public INotificationRepository NotificationRepository => _notificationRepository ??= new NotificationRepository(_context);
 
         public async Task<int> SaveChangesAsync()
         {
