@@ -1,0 +1,311 @@
+@page
+@model NotificationTestModel
+@{
+    ViewData["Title"] = "Push Notifications Test";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">
+                        <i class="bi bi-bell"></i> Push Notifications Test
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle"></i> Welcome to Utility Bill Management System</h5>
+                        <p>This page allows you to test the web push notification system. Follow these steps to get started:</p>
+                        <ol class="mb-0">
+                            <li><strong>Enable Notifications:</strong> Click the "Enable Notifications" button in the navigation bar</li>
+                            <li><strong>Grant Permission:</strong> Allow notifications when prompted by your browser</li>
+                            <li><strong>Test Notifications:</strong> Use the buttons below to send test notifications</li>
+                            <li><strong>Quick Test:</strong> Use the auto-test feature to see notifications every 30 seconds</li>
+                        </ol>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h5><i class="bi bi-gear"></i> Notification Status</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <strong>Service Worker:</strong>
+                                        <span id="sw-status" class="badge bg-secondary">Checking...</span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong>Push Manager:</strong>
+                                        <span id="push-status" class="badge bg-secondary">Checking...</span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong>Subscription:</strong>
+                                        <span id="subscription-status" class="badge bg-secondary">Checking...</span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong>Permission:</strong>
+                                        <span id="permission-status" class="badge bg-secondary">Checking...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h5><i class="bi bi-send"></i> Test Notifications</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-grid gap-2">
+                                        <button id="test-notification-btn" class="btn btn-primary" disabled>
+                                            <i class="bi bi-bell"></i> Send Test Notification
+                                        </button>
+                                        <button id="test-invoice-btn" class="btn btn-success" disabled>
+                                            <i class="bi bi-receipt"></i> Test Invoice Notification
+                                        </button>
+                                        <button id="test-maintenance-btn" class="btn btn-warning" disabled>
+                                            <i class="bi bi-tools"></i> Test Maintenance Notification
+                                        </button>
+                                        <button id="test-payment-btn" class="btn btn-danger" disabled>
+                                            <i class="bi bi-credit-card"></i> Test Payment Reminder
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h5><i class="bi bi-chat-dots"></i> Notification Log</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="notification-log" class="border rounded p-3" style="height: 200px; overflow-y: auto; background-color: #f8f9fa;">
+                                        <p class="text-muted">Notification events will appear here...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-warning">
+                                <h6><i class="bi bi-exclamation-triangle"></i> Important Notes:</h6>
+                                <ul class="mb-0">
+                                    <li>Make sure you're using HTTPS (required for push notifications)</li>
+                                    <li>Enable notifications in your browser when prompted</li>
+                                    <li>Allow notifications from this site in browser settings</li>
+                                    <li>Test notifications work even when the browser is closed</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Notification test functionality
+        class NotificationTester {
+            constructor() {
+                this.logElement = document.getElementById('notification-log');
+                this.initializeStatus();
+                this.setupEventListeners();
+            }
+
+            initializeStatus() {
+                this.checkServiceWorker();
+                this.checkPushManager();
+                this.checkPermission();
+                this.checkSubscription();
+            }
+
+            async checkServiceWorker() {
+                const statusElement = document.getElementById('sw-status');
+                if ('serviceWorker' in navigator) {
+                    statusElement.textContent = 'Supported';
+                    statusElement.className = 'badge bg-success';
+                } else {
+                    statusElement.textContent = 'Not Supported';
+                    statusElement.className = 'badge bg-danger';
+                }
+            }
+
+            async checkPushManager() {
+                const statusElement = document.getElementById('push-status');
+                if ('PushManager' in window) {
+                    statusElement.textContent = 'Supported';
+                    statusElement.className = 'badge bg-success';
+                } else {
+                    statusElement.textContent = 'Not Supported';
+                    statusElement.className = 'badge bg-danger';
+                }
+            }
+
+            async checkPermission() {
+                const statusElement = document.getElementById('permission-status');
+                if ('Notification' in window) {
+                    const permission = Notification.permission;
+                    statusElement.textContent = permission.charAt(0).toUpperCase() + permission.slice(1);
+                    
+                    if (permission === 'granted') {
+                        statusElement.className = 'badge bg-success';
+                    } else if (permission === 'denied') {
+                        statusElement.className = 'badge bg-danger';
+                    } else {
+                        statusElement.className = 'badge bg-warning';
+                    }
+                } else {
+                    statusElement.textContent = 'Not Supported';
+                    statusElement.className = 'badge bg-danger';
+                }
+            }
+
+            async checkSubscription() {
+                const statusElement = document.getElementById('subscription-status');
+                try {
+                    const registration = await navigator.serviceWorker.ready;
+                    const subscription = await registration.pushManager.getSubscription();
+                    
+                    if (subscription) {
+                        statusElement.textContent = 'Subscribed';
+                        statusElement.className = 'badge bg-success';
+                        this.enableButtons();
+                    } else {
+                        statusElement.textContent = 'Not Subscribed';
+                        statusElement.className = 'badge bg-warning';
+                        this.disableButtons();
+                    }
+                } catch (error) {
+                    statusElement.textContent = 'Error';
+                    statusElement.className = 'badge bg-danger';
+                    this.disableButtons();
+                }
+            }
+
+            enableButtons() {
+                document.getElementById('test-notification-btn').disabled = false;
+                document.getElementById('test-invoice-btn').disabled = false;
+                document.getElementById('test-maintenance-btn').disabled = false;
+                document.getElementById('test-payment-btn').disabled = false;
+            }
+
+            disableButtons() {
+                document.getElementById('test-notification-btn').disabled = true;
+                document.getElementById('test-invoice-btn').disabled = true;
+                document.getElementById('test-maintenance-btn').disabled = true;
+                document.getElementById('test-payment-btn').disabled = true;
+            }
+
+            setupEventListeners() {
+                document.getElementById('test-notification-btn').addEventListener('click', () => {
+                    this.sendTestNotification('Test Notification', 'This is a test notification from the Utility Bill Management System!');
+                });
+
+                document.getElementById('test-invoice-btn').addEventListener('click', () => {
+                    this.sendTestNotification('New Invoice Available', 'Your monthly utility bill has been generated. Please check your account for details.');
+                });
+
+                document.getElementById('test-maintenance-btn').addEventListener('click', () => {
+                    this.sendTestNotification('Maintenance Reminder', 'Scheduled maintenance will be performed tomorrow. Please prepare accordingly.');
+                });
+
+                document.getElementById('test-payment-btn').addEventListener('click', () => {
+                    this.sendTestNotification('Payment Due Reminder', 'Your utility bill payment is due in 3 days. Please make payment to avoid late fees.');
+                });
+            }
+
+            async sendTestNotification(title, body) {
+                try {
+                    this.log(`Sending notification: ${title}`);
+                    
+                    // Always use browser notification by default for reliability
+                    this.showBrowserNotification(title, body);
+                } catch (error) {
+                    this.log(`Error sending notification: ${error.message}`, 'error');
+                }
+            }
+
+            showBrowserNotification(title, body) {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    const notification = new Notification(title, {
+                        body: body,
+                        icon: '/favicon.ico',
+                        badge: '/favicon.ico',
+                        tag: 'test-notification',
+                        requireInteraction: true
+                    });
+
+                    notification.onclick = function() {
+                        window.focus();
+                        notification.close();
+                    };
+
+                    this.log(`Browser notification sent: ${title}`, 'success');
+                } else {
+                    this.log('Browser notifications not available or permission denied', 'error');
+                }
+            }
+
+            log(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                logEntry.innerHTML = `<small class="text-muted">[${timestamp}]</small> ${message}`;
+                
+                this.logElement.appendChild(logEntry);
+                this.logElement.scrollTop = this.logElement.scrollHeight;
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            window.notificationTester = new NotificationTester();
+            
+            // Listen for service worker messages
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.addEventListener('message', function(event) {
+                    if (event.data && event.data.type === 'NOTIFICATION_SENT') {
+                        window.notificationTester.log(`Service worker notification: ${event.data.message}`, 'success');
+                    }
+                });
+            }
+        });
+    </script>
+
+    <style>
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+        
+        .log-info {
+            color: #0d6efd;
+        }
+        
+        .log-success {
+            color: #198754;
+        }
+        
+        .log-warning {
+            color: #fd7e14;
+        }
+        
+        .log-error {
+            color: #dc3545;
+        }
+        
+        #notification-log {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+    </style>
+} 

@@ -45,6 +45,10 @@ builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 // Đăng ký service nghiệp vụ
 builder.Services.AddScoped<IBillingService, BillingService>();
 
+// Register push notification services
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
+
 // Đăng ký background job
 builder.Services.AddHostedService<MonthlyBillingJob>();
 
@@ -64,21 +68,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 builder.Services.AddAuthorization();
-var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(name: MyAllowSpecificOrigins,
-                      policy =>
-                      {
-                          policy.WithOrigins("https://localhost:7240")
-                                .AllowAnyHeader()
-                                .AllowAnyMethod();
-                      });
-});
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 // Add CORS to allow WebApp to access API
 builder.Services.AddCors(options =>
@@ -91,6 +80,10 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
+
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 //Connect MOMO API
 builder.Services.Configure<MomoOptionModel>(builder.Configuration.GetSection("MomoAPI"));
@@ -116,10 +109,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors(MyAllowSpecificOrigins);
-app.UseCors("AllowFrontend");
-
-// Enable CORS
 app.UseCors("AllowWebApp");
 
 app.UseAuthentication();

@@ -4,9 +4,10 @@ using UtilityBill.Api.Services.VnPay;
 using UtilityBill.Data.Models;
 using UtilityBill.Data.Models.VnPay;
 using UtilityBill.Data.Enums;
-using UtilityBill.Data;
-using Microsoft.EntityFrameworkCore;
 using UtilityBill.Api.DTOs;
+using UtilityBill.Business.Interfaces;
+using UtilityBill.Data.DTOs;
+using System.Text.Json;
 
 namespace UtilityBill.Api.Controllers;
 
@@ -16,10 +17,19 @@ public class PaymentController : Controller
 {
     private IMomoService _momoService;
     private readonly IVnPayService _vnPayService;
-    public PaymentController(IMomoService momoService,IVnPayService vnPayService)
+    private readonly IPushNotificationService _pushNotificationService;
+    private readonly ILogger<PaymentController> _logger;
+
+    public PaymentController(
+        IMomoService momoService, 
+        IVnPayService vnPayService, 
+        IPushNotificationService pushNotificationService,
+        ILogger<PaymentController> logger)
     {
         _momoService = momoService;
         _vnPayService = vnPayService;
+        _pushNotificationService = pushNotificationService;
+        _logger = logger;
     }
 
     [HttpPost("CreatePaymentUrlVnpay")]
@@ -50,9 +60,73 @@ public class PaymentController : Controller
         }
     }
     [HttpGet("PaymentCallbackVnpay")]
-    public IActionResult PaymentCallbackVnpay()
+    public async Task<IActionResult> PaymentCallbackVnpay()
     {
         var response = _vnPayService.PaymentExecute(Request.Query);
+
+        // Send notification for successful VnPay payment
+        if (response.Success)
+        {
+            try
+            {
+                var notification = new PushNotificationDto
+                {
+                    Title = "Payment Successful!",
+                    Body = $"Your VnPay payment of {response.OrderDescription} has been completed successfully. Transaction ID: {response.TransactionId}",
+                    Tag = "payment-success",
+                    Data = JsonSerializer.Serialize(new
+                    {
+                        type = "payment_success",
+                        paymentMethod = "VnPay",
+                        transactionId = response.TransactionId,
+                        orderId = response.OrderId
+                    })
+                };
+
+                await _pushNotificationService.SendNotificationAsync(notification);
+                _logger.LogInformation("Payment success notification sent for VnPay transaction {TransactionId}", response.TransactionId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send payment success notification for VnPay transaction {TransactionId}", response.TransactionId);
+            }
+        }
+
+        return Json(response);
+    }
+
+    [HttpGet("PaymentCallBack")]
+    public async Task<IActionResult> PaymentCallBack()
+    {
+        var response = _momoService.PaymentExecuteAsync(Request.Query);
+
+        // Send notification for successful MoMo payment
+        if (response != null && !string.IsNullOrEmpty(response.OrderId))
+        {
+            try
+            {
+                var notification = new PushNotificationDto
+                {
+                    Title = "Payment Successful!",
+                    Body = $"Your MoMo payment has been completed successfully. Order ID: {response.OrderId}",
+                    Tag = "payment-success",
+                    Data = JsonSerializer.Serialize(new
+                    {
+                        type = "payment_success",
+                        paymentMethod = "MoMo",
+                        orderId = response.OrderId,
+                        amount = response.Amount
+                    })
+                };
+
+                await _pushNotificationService.SendNotificationAsync(notification);
+                _logger.LogInformation("Payment success notification sent for MoMo order {OrderId}", response.OrderId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send payment success notification for MoMo order {OrderId}", response.OrderId);
+            }
+        }
 
         return Json(response);
     }
@@ -158,8 +232,115 @@ public class PaymentController : Controller
             };
             dbContext.Payments.Add(payment);
             await dbContext.SaveChangesAsync();
+
+            // Send appropriate notifications based on payment method
+            try
+            {
+                if (paymentMethod == PaymentMethod.CASH)
+                {
+                    // Send warning notification for cash payment
+                    var warningNotification = new PushNotificationDto
+                    {
+                        Title = "Cash Payment Warning",
+                        Body = $"Cash payment of {request.Amount:N0} VND has been recorded as 'Unpaid'. Please complete the payment in person.",
+                        Tag = "cash-payment-warning",
+                        Data = JsonSerializer.Serialize(new
+                        {
+                            type = "cash_payment_warning",
+                            paymentMethod = "Cash",
+                            amount = request.Amount,
+                            orderId = request.OrderId
+                        })
+                    };
+
+                    await _pushNotificationService.SendNotificationAsync(warningNotification);
+                    _logger.LogInformation("Cash payment warning notification sent for order {OrderId}", request.OrderId);
+                }
+                else
+                {
+                    // Send success notification for online payments
+                    var successNotification = new PushNotificationDto
+                    {
+                        Title = "Payment Successful!",
+                        Body = $"Your {paymentMethod} payment of {request.Amount:N0} VND has been processed successfully.",
+                        Tag = "payment-success",
+                        Data = JsonSerializer.Serialize(new
+                        {
+                            type = "payment_success",
+                            paymentMethod = paymentMethod.ToString(),
+                            amount = request.Amount,
+                            orderId = request.OrderId
+                        })
+                    };
+
+                    await _pushNotificationService.SendNotificationAsync(successNotification);
+                    _logger.LogInformation("Payment success notification sent for {PaymentMethod} order {OrderId}", paymentMethod, request.OrderId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send payment notification for {PaymentMethod} order {OrderId}", paymentMethod, request.OrderId);
+            }
         }
 
         return Ok(new { message, paymentResponse });
     }
+
+    [HttpPost("mark-payment-successful")]
+    public async Task<IActionResult> MarkPaymentSuccessful([FromBody] MarkPaymentSuccessfulRequest request)
+    {
+        try
+        {
+            var dbContext = HttpContext.RequestServices.GetService(typeof(UtilityBill.Data.Context.UtilityBillDbContext)) as UtilityBill.Data.Context.UtilityBillDbContext;
+            if (dbContext == null)
+                return StatusCode(500, "Database context not available");
+
+            var payment = await dbContext.Payments.FindAsync(request.PaymentId);
+            if (payment == null)
+                return NotFound("Payment not found");
+
+            payment.Status = "Success";
+            payment.TransactionCode = request.TransactionCode;
+            await dbContext.SaveChangesAsync();
+
+            // Send success notification
+            try
+            {
+                var notification = new PushNotificationDto
+                {
+                    Title = "Payment Confirmed!",
+                    Body = $"Your {payment.PaymentMethod} payment of {payment.Amount:N0} VND has been confirmed and processed successfully.",
+                    Tag = "payment-confirmed",
+                    Data = JsonSerializer.Serialize(new
+                    {
+                        type = "payment_confirmed",
+                        paymentMethod = payment.PaymentMethod.ToString(),
+                        amount = payment.Amount,
+                        transactionCode = payment.TransactionCode,
+                        paymentId = payment.Id
+                    })
+                };
+
+                await _pushNotificationService.SendNotificationAsync(notification);
+                _logger.LogInformation("Payment confirmation notification sent for payment {PaymentId}", payment.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send payment confirmation notification for payment {PaymentId}", payment.Id);
+            }
+
+            return Ok(new { message = "Payment marked as successful", payment });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error marking payment as successful");
+            return StatusCode(500, "Internal server error");
+        }
+    }
+}
+
+public class MarkPaymentSuccessfulRequest
+{
+    public Guid PaymentId { get; set; }
+    public string? TransactionCode { get; set; }
 }

@@ -12,5 +12,6 @@ namespace UtilityBill.Data.Repositories
         IPaymentRepository PaymentRepository { get; }
         IMaintenanceScheduleRepository MaintenanceScheduleRepository { get; }
         INotificationRepository NotificationRepository { get; }
+        IPushSubscriptionRepository PushSubscriptionRepository { get; }
     }
 }

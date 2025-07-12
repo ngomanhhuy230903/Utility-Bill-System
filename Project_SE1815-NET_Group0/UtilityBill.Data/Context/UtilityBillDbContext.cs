@@ -26,6 +26,8 @@ public partial class UtilityBillDbContext : DbContext
 
     public virtual DbSet<Notification> Notifications { get; set; }
 
+    public virtual DbSet<PushSubscription> PushSubscriptions { get; set; }
+
     public virtual DbSet<Payment> Payments { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
@@ -128,6 +130,25 @@ public partial class UtilityBillDbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Notificat__UserI__60A75C0F");
+        });
+
+        modelBuilder.Entity<PushSubscription>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__PushSubs__3214EC07A1B2C3D4");
+
+            entity.HasIndex(e => e.Endpoint, "IX_PushSubscriptions_Endpoint").IsUnique();
+
+            entity.Property(e => e.Endpoint).IsRequired();
+            entity.Property(e => e.P256Dh).IsRequired();
+            entity.Property(e => e.Auth).IsRequired();
+            entity.Property(e => e.UserId).HasMaxLength(450);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__PushSubsc__UserI__70A75C0F");
         });
 
         modelBuilder.Entity<Payment>(entity =>
