@@ -40,7 +40,8 @@ builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 // Đăng ký service nghiệp vụ
 builder.Services.AddScoped<IBillingService, BillingService>();
-
+// Đăng ký Automapper
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 // Đăng ký background job
 builder.Services.AddHostedService<MonthlyBillingJob>();
 

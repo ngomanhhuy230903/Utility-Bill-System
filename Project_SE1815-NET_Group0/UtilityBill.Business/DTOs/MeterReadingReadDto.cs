@@ -6,7 +6,15 @@ using System.Threading.Tasks;
 
 namespace UtilityBill.Business.DTOs
 {
-    internal class MeterReadingReadDto
+    public class MeterReadingReadDto
     {
+        public int Id { get; set; }
+        public int RoomId { get; set; }
+        public int ReadingMonth { get; set; }
+        public int ReadingYear { get; set; }
+        public decimal ElectricReading { get; set; }
+        public decimal WaterReading { get; set; }
+        public DateTime ReadingDate { get; set; }
+        public string RecordedByUserId { get; set; }
     }
 }

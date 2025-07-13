@@ -6,7 +6,27 @@ using System.Threading.Tasks;
 
 namespace UtilityBill.Business.DTOs
 {
-    internal class MeterReadingCreateDto
+    public class MeterReadingCreateDto
     {
+        [Required]
+        public int RoomId { get; set; }
+
+        [Required, Range(1, 12)]
+        public int ReadingMonth { get; set; }
+
+        [Required]
+        public int ReadingYear { get; set; }
+
+        [Required]
+        public decimal ElectricReading { get; set; }
+
+        [Required]
+        public decimal WaterReading { get; set; }
+
+        [Required]
+        public DateTime ReadingDate { get; set; }
+
+        // Ghi nhận bởi user nào (Lấy từ token/authenticated user)
+        public string RecordedByUserId { get; set; }
     }
 }
