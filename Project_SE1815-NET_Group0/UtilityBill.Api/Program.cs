@@ -39,7 +39,6 @@ builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 builder.Services.AddSingleton<IBillingConfigService, BillingConfigService>(); // Thêm lại dòng này nếu bạn đã xóa
 builder.Services.AddScoped<IPdfService, PdfService>();
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
-builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 // Thay thế đăng ký Email Service cũ bằng cái mới
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 // Đăng ký service nghiệp vụ

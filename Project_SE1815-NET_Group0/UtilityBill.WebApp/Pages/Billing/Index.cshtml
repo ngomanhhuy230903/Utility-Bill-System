@@ -51,6 +51,12 @@
                                 <a asp-page="./ViewPdf" asp-route-id="@invoice.Id" target="_blank" class="btn btn-sm btn-primary">
                                     <i class="bi bi-printer-fill"></i> Xem & In PDF
                                 </a>
+                                @if (invoice.Status != "Paid")
+                                {
+                                    <a asp-page="/Invoices/Pay" asp-route-id="@invoice.Id" class="btn btn-sm btn-success">
+                                        <i class="bi bi-credit-card-fill"></i> Thanh toán
+                                    </a>
+                                }
                             </td>
                         </tr>
                     }

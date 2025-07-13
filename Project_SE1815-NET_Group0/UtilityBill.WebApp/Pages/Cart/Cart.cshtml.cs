@@ -40,7 +40,6 @@ public class Cart : PageModel
         }
     }
 
-    [HttpPost]
     public async Task<IActionResult> OnPostCreatePaymentMomoAsync(string fullName, decimal amount, string orderInfo)
     {
         try
@@ -109,7 +108,6 @@ public class Cart : PageModel
         }
     }
 
-    [HttpPost]
     public async Task<IActionResult> OnPostCreatePaymentUrlVnpayAsync(string fullName, decimal amount, string orderInfo)
     {
         try

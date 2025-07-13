@@ -88,6 +88,16 @@ namespace UtilityBill.WebApp.Services
             catch { return new List<InvoiceDto>(); }
         }
 
+        public async Task<InvoiceDto?> GetInvoiceByIdAsync(Guid invoiceId)
+        {
+            var client = GetAuthenticatedClient();
+            try
+            {
+                return await client.GetFromJsonAsync<InvoiceDto>($"billing/{invoiceId}");
+            }
+            catch { return null; }
+        }
+
         public async Task<bool> TriggerInvoiceGenerationAsync()
         {
             var client = GetAuthenticatedClient();
@@ -171,6 +181,24 @@ namespace UtilityBill.WebApp.Services
             var client = _httpClientFactory.CreateClient("ApiClient");
             var response = await client.PostAsJsonAsync("auth/reset-password", dto);
             return response.IsSuccessStatusCode;
+        }
+
+        public async Task<object?> CreateUnifiedPaymentAsync(object paymentRequest, string paymentMethod)
+        {
+            var client = GetAuthenticatedClient();
+            try
+            {
+                var response = await client.PostAsJsonAsync($"payments/create?paymentMethod={paymentMethod}", paymentRequest);
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<object>();
+                }
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

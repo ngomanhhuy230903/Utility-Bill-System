@@ -16,7 +16,7 @@ namespace UtilityBill.WebApp.Pages.Rooms
             _apiClient = apiClient;
         }
 
-        public RoomDto Room { get; set; }
+        public RoomDto? Room { get; set; }
         public List<TenantHistoryDto> Histories { get; set; } = new List<TenantHistoryDto>();
 
         public async Task<IActionResult> OnGetAsync(int roomId)

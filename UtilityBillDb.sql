@@ -170,14 +170,14 @@ INSERT INTO Roles (Id, Name) VALUES
 ('role-tenant-guid', 'Tenant');
 
 -- 2. Dữ liệu người dùng (Users)
--- LƯU Ý: PasswordHash được tạo bởi Identity, ở đây chỉ là placeholder.
--- Khi tạo user trong app, hãy dùng `UserManager.CreateAsync(user, password)`
+-- LƯU Ý: PasswordHash được tạo bởi BCrypt, ở đây sử dụng hash cho "password123"
+-- Khi tạo user trong app, hãy dùng BCrypt.Net.BCrypt.HashPassword(password)
 DELETE FROM Users;
 INSERT INTO Users (Id, UserName, Email, PasswordHash, FullName, PhoneNumber, IsActive) VALUES
-('admin-user-guid', 'admin', 'admin@email.com', '$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Quản Trị Viên', '0987654321', 1),
-('tenant1-user-guid', 'nguyenvana', 'nguyenvana@email.com', '$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Nguyễn Văn A', '0123456789', 1),
-('tenant2-user-guid', 'tranvanb', 'tranvanb@email.com', '$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Trần Văn B', '0123456788', 1),
-('tenant3-user-guid', 'lethic', 'lethic@email.com', '$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Lê Thị C', '0123456787', 1);
+('admin-user-guid', 'admin', 'admin@email.com', '$2a$12$6ETOJ.0Ro9BokJU6Ou4IkeKALuRAU0jloUzZaa7kSDPMTdTvEr7Cq', 'Quản Trị Viên', '0987654321', 1),
+('tenant1-user-guid', 'nguyenvana', 'nguyenvana@email.com', '$2a$12$6ETOJ.0Ro9BokJU6Ou4IkeKALuRAU0jloUzZaa7kSDPMTdTvEr7Cq', 'Nguyễn Văn A', '0123456789', 1),
+('tenant2-user-guid', 'tranvanb', 'tranvanb@email.com', '$2a$12$6ETOJ.0Ro9BokJU6Ou4IkeKALuRAU0jloUzZaa7kSDPMTdTvEr7Cq', 'Trần Văn B', '0123456788', 1),
+('tenant3-user-guid', 'lethic', 'lethic@email.com', '$2a$12$6ETOJ.0Ro9BokJU6Ou4IkeKALuRAU0jloUzZaa7kSDPMTdTvEr7Cq', 'Lê Thị C', '0123456787', 1);
 
 -- 3. Phân quyền cho người dùng (UserRoles)
 INSERT INTO UserRoles (UserId, RoleId) VALUES

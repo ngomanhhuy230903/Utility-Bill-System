@@ -13,19 +13,18 @@ namespace UtilityBill.Api.Controllers
     public class AuthController : BaseApiController
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IPasswordHasher<User> _passwordHasher;
+        private readonly IAuthService _authService;
         private readonly IEmailService _emailService;
         private readonly ITokenService _tokenService;
 
-        // Constructor đã được dọn dẹp, không còn UserManager hay IAuthService
         public AuthController(
             IUnitOfWork unitOfWork,
-            IPasswordHasher<User> passwordHasher,
+            IAuthService authService,
             IEmailService emailService,
             ITokenService tokenService)
         {
             _unitOfWork = unitOfWork;
-            _passwordHasher = passwordHasher;
+            _authService = authService;
             _emailService = emailService;
             _tokenService = tokenService;
         }
@@ -33,44 +32,28 @@ namespace UtilityBill.Api.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
         {
-            var existingUser = await _unitOfWork.UserRepository.FirstOrDefaultAsync(u => u.UserName.ToLower() == registerDto.UserName.ToLower());
-            if (existingUser != null)
+            var user = await _authService.RegisterAsync(registerDto);
+            if (user == null)
             {
                 return BadRequest("Tên đăng nhập đã được sử dụng.");
             }
 
-            var user = new User
-            {
-                Id = Guid.NewGuid().ToString(),
-                UserName = registerDto.UserName,
-                Email = registerDto.Email,
-                FullName = registerDto.FullName,
-                PhoneNumber = registerDto.PhoneNumber,
-                PasswordHash = _passwordHasher.HashPassword(null, registerDto.Password),
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true
-            };
-
-            await _unitOfWork.UserRepository.AddAsync(user);
-            await _unitOfWork.SaveChangesAsync();
-
             var token = await _tokenService.CreateToken(user);
-            return new UserDto { UserName = user.UserName, Email = user.Email, FullName = user.FullName, Token = token };
+            return new UserDto { Id = user.Id, UserName = user.UserName, Email = user.Email, FullName = user.FullName, Token = token };
         }
 
         [HttpPost("login")]
         public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
         {
-            var user = await _unitOfWork.UserRepository.FirstOrDefaultAsync(u => u.UserName.ToLower() == loginDto.UserName.ToLower());
-            if (user == null || _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, loginDto.Password) == PasswordVerificationResult.Failed)
+            var user = await _authService.LoginAsync(loginDto);
+            if (user == null)
             {
                 return Unauthorized("Sai tên đăng nhập hoặc mật khẩu.");
             }
 
             var token = await _tokenService.CreateToken(user);
-            return new UserDto { UserName = user.UserName, Email = user.Email, FullName = user.FullName, Token = token };
+            return new UserDto { Id = user.Id, UserName = user.UserName, Email = user.Email, FullName = user.FullName, Token = token };
         }
-
 
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
@@ -106,7 +89,8 @@ namespace UtilityBill.Api.Controllers
                 return BadRequest(new { message = "Người dùng không tồn tại." });
             }
 
-            user.PasswordHash = _passwordHasher.HashPassword(user, resetPasswordDto.Password);
+            // Use BCrypt to hash the new password
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(resetPasswordDto.Password);
             _unitOfWork.UserRepository.Update(user);
             await _unitOfWork.SaveChangesAsync();
 

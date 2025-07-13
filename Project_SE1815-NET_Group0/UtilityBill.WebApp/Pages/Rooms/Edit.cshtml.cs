@@ -18,7 +18,7 @@ namespace UtilityBill.WebApp.Pages.Rooms
         }
 
         [BindProperty]
-        public UpdateRoomDto Room { get; set; }
+        public UpdateRoomDto Room { get; set; } = new UpdateRoomDto();
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
