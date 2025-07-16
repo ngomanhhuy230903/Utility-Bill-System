@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
 using System.Text;
@@ -7,6 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace UtilityBill.WebApp.Pages.Cart;
 
+[Authorize]
 public class Cart : PageModel
 {
     private readonly IHttpClientFactory _httpClientFactory;

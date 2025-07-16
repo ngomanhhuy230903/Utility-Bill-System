@@ -4,27 +4,39 @@
 @{
 }
 
-<h2>Báo cáo doanh thu</h2>
+<h2 class="mb-4 text-center text-success">Báo cáo doanh thu</h2>
 
-<form id="filter-form" class="mb-4">
-    <label>From: <input type="date" name="from" required /></label>
-    <label>To: <input type="date" name="to" required /></label>
-    <label>
-        Group By:
-        <select name="groupBy">
-            <option value="day">Theo ngày</option>
-            <option value="month">Theo tháng</option>
-            <option value="year">Theo năm</option>
-        </select>
-    </label>
-    <button type="submit" class="btn btn-primary">Lọc</button>
-    <button id="export-revenue" class="btn btn-outline-secondary">Export Revenue</button>
-</form>
+<div class="container">
+    <form id="filter-form" class="row g-3 p-4 border rounded shadow-sm mb-4 bg-light">
+        <div class="col-md-3">
+            <label class="form-label">Từ ngày</label>
+            <input type="date" name="from" class="form-control" required />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Đến ngày</label>
+            <input type="date" name="to" class="form-control" required />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Nhóm theo</label>
+            <select name="groupBy" class="form-select">
+                <option value="day">Theo ngày</option>
+                <option value="month">Theo tháng</option>
+                <option value="year">Theo năm</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end gap-2">
+            <button type="submit" class="btn btn-success w-100">Lọc dữ liệu</button>
+            <button id="export-revenue" class="btn btn-outline-secondary w-100">Xuất Excel</button>
+        </div>
+    </form>
 
-<div class="row">
-    <div class="col-md-12">
-        <h4>Doanh thu</h4>
-        <canvas id="revenueChart" height="200"></canvas>
+    <div class="card shadow-sm">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Biểu đồ doanh thu</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="revenueChart" style="height: 500px;"></canvas>
+        </div>
     </div>
 </div>
 
@@ -36,8 +48,38 @@
 
         const revenueChart = new Chart(document.getElementById('revenueChart'), {
             type: 'line',
-            data: { labels: [], datasets: [] },
-            options: { responsive: true }
+            data: {
+                labels: [],
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Doanh thu (VND)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Thời gian'
+                        }
+                    }
+                }
+            }
         });
 
         $('#filter-form').on('submit', function (e) {
@@ -52,7 +94,16 @@
                 revenueChart.data = {
                     labels: labels,
                     datasets: [
-                        { label: 'Doanh thu (VND)', borderColor: '#ff7043', data: revenue, fill: false }
+                        {
+                            label: 'Doanh thu (VND)',
+                            borderColor: '#ff7043',
+                            backgroundColor: 'rgba(255, 112, 67, 0.2)',
+                            data: revenue,
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#ff7043'
+                        }
                     ]
                 };
                 revenueChart.update();
@@ -65,7 +116,6 @@
             window.location = `${apiBase}/reports/export-revenue?${query}`;
         });
 
-        // Auto load today's report
         $(function () {
             const today = new Date().toISOString().slice(0, 10);
             $('input[name="from"]').val(today);
