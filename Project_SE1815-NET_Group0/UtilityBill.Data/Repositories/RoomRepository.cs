@@ -1,4 +1,5 @@
-﻿using UtilityBill.Data.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using UtilityBill.Data.Context;
 using UtilityBill.Data.Models;
 
 namespace UtilityBill.Data.Repositories
@@ -9,5 +10,9 @@ namespace UtilityBill.Data.Repositories
         {
         }
 
+        public async Task<Room?> GetByRoomNumberAsync(string roomNumber)
+        {
+            return await _dbSet.FirstOrDefaultAsync(r => r.RoomNumber == roomNumber);
+        }
     }
 }

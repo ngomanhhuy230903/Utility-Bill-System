@@ -14,5 +14,6 @@ namespace UtilityBill.Business.Interfaces
         Task<MeterReadingReadDto> CreateMeterReadingAsync(MeterReadingCreateDto dto);
         Task<bool> UpdateMeterReadingAsync(int id, MeterReadingCreateDto dto);
         Task<bool> DeleteMeterReadingAsync(int id);
+        Task<(int successCount, int failCount)> BulkCreateMeterReadingsAsync(IList<MeterReadingUploadDto> dtos);
     }
 }

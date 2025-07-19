@@ -73,6 +73,47 @@ namespace UtilityBill.Business.Services
             var count = await _uow.SaveChangesAsync();
             return count > 0;
         }
+
+        public async Task<(int successCount, int failCount)> BulkCreateMeterReadingsAsync(IList<MeterReadingUploadDto> dtos)
+        {
+            int success = 0, fail = 0;
+
+            foreach (var upload in dtos) {
+                // 1. Resolve RoomNumber → RoomId
+                var room = await _uow.RoomRepository.GetByRoomNumberAsync(upload.RoomNumber);
+                if (room == null)
+                {
+                    fail++;
+                    continue;
+                }
+
+                // 2. Map to CreateDto
+                var createDto = new MeterReadingCreateDto
+                {
+                    RoomId = room.Id,
+                    ReadingMonth = upload.ReadingDate.Month,
+                    ReadingYear = upload.ReadingDate.Year,
+                    ElectricReading = upload.ElectricReading,
+                    WaterReading = upload.WaterReading,
+                    ReadingDate = upload.ReadingDate,
+                    RecordedByUserId = /* pull from current user context or a system user */
+                        "admin-user-guid"
+                };
+
+                try
+                {
+                    await CreateMeterReadingAsync(createDto);
+                    success++;
+                }
+                catch
+                {
+                    // e.g. unique constraint violation
+                    fail++;
+                }
+                
+            }
+            return (success, fail);
+        }
     }
 
 }
