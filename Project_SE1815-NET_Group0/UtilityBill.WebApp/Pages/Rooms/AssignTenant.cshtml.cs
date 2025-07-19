@@ -19,10 +19,10 @@ namespace UtilityBill.WebApp.Pages.Rooms
 
         [BindProperty(SupportsGet = true)]
         public int RoomId { get; set; }
-        public RoomDto Room { get; set; }
+        public RoomDto? Room { get; set; }
 
         [BindProperty]
-        public AssignTenantDto AssignDto { get; set; }
+        public AssignTenantDto AssignDto { get; set; } = new AssignTenantDto();
 
         public SelectList TenantList { get; set; }
 

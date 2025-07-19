@@ -14,6 +14,7 @@ namespace UtilityBill.Data.Repositories
         private IPaymentRepository? _paymentRepository;
         private IMaintenanceScheduleRepository? _maintenanceScheduleRepository;
         private INotificationRepository? _notificationRepository;
+        private IPushSubscriptionRepository? _pushSubscriptionRepository;
 
         public UnitOfWork(UtilityBillDbContext context)
         {
@@ -34,6 +35,8 @@ namespace UtilityBill.Data.Repositories
         public IMaintenanceScheduleRepository MaintenanceScheduleRepository => _maintenanceScheduleRepository ??= new MaintenanceScheduleRepository(_context);
 
         public INotificationRepository NotificationRepository => _notificationRepository ??= new NotificationRepository(_context);
+
+        public IPushSubscriptionRepository PushSubscriptionRepository => _pushSubscriptionRepository ??= new PushSubscriptionRepository(_context);
 
         public async Task<int> SaveChangesAsync()
         {

@@ -9,8 +9,10 @@ namespace UtilityBill.WebApp.Services
         Task<bool> UpdateRoomAsync(int id, UpdateRoomDto room); // Thêm mới
         Task<bool> DeleteRoomAsync(int id); // Thêm mới
         Task<List<InvoiceDto>> GetInvoicesAsync();
+        Task<InvoiceDto?> GetInvoiceByIdAsync(Guid invoiceId); // Thêm mới
         Task<bool> TriggerInvoiceGenerationAsync();
         Task<byte[]?> GetInvoicePdfAsync(Guid invoiceId);
+        Task<object?> CreateUnifiedPaymentAsync(object paymentRequest, string paymentMethod); // Thêm mới
         // Dùng UserDto đã có trong WebApp/DTOs
         Task<List<UserDto>> GetTenantsAsync();
         Task<bool> AssignTenantAsync(int roomId, AssignTenantDto assignDto);

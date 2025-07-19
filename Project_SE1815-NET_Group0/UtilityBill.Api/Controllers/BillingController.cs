@@ -74,5 +74,49 @@ namespace UtilityBill.Api.Controllers
 
             return File(pdfBytes, "application/pdf", $"HoaDon-{invoiceId.ToString().Substring(0, 8).ToUpper()}.pdf");
         }
+
+        [HttpGet("{invoiceId}")]
+        public async Task<IActionResult> GetInvoiceById(Guid invoiceId)
+        {
+            var invoice = await _billingService.GetInvoiceByIdAsync(invoiceId);
+
+            if (invoice == null)
+            {
+                return NotFound("Không tìm thấy hóa đơn.");
+            }
+
+            // Convert to DTO
+            var invoiceDto = new InvoiceDto
+            {
+                Id = invoice.Id,
+                RoomId = invoice.RoomId,
+                InvoicePeriodMonth = invoice.InvoicePeriodMonth,
+                InvoicePeriodYear = invoice.InvoicePeriodYear,
+                DueDate = invoice.DueDate,
+                TotalAmount = invoice.TotalAmount,
+                Status = invoice.Status,
+                Room = new RoomDto
+                {
+                    Id = invoice.Room.Id,
+                    RoomNumber = invoice.Room.RoomNumber,
+                    Block = invoice.Room.Block,
+                    Floor = invoice.Room.Floor,
+                    Area = invoice.Room.Area,
+                    Price = invoice.Room.Price,
+                    Status = invoice.Room.Status,
+                    CreatedAt = invoice.Room.CreatedAt
+                },
+                InvoiceDetails = invoice.InvoiceDetails.Select(detail => new InvoiceDetailDto
+                {
+                    Id = detail.Id,
+                    Description = detail.Description,
+                    Quantity = detail.Quantity,
+                    UnitPrice = detail.UnitPrice,
+                    Amount = detail.Amount
+                }).ToList()
+            };
+
+            return Ok(invoiceDto);
+        }
     }
 }

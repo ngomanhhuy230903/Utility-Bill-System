@@ -92,5 +92,21 @@ namespace UtilityBill.Business.Services
             await _unitOfWork.SaveChangesAsync();
             _logger.LogInformation("Job tạo hóa đơn hàng tháng hoàn tất.");
         }
+
+        public async Task<Invoice?> GetInvoiceByIdAsync(Guid invoiceId)
+        {
+            _logger.LogInformation("Getting invoice by ID: {InvoiceId}", invoiceId);
+            
+            var invoice = await _unitOfWork.InvoiceRepository.GetInvoiceWithDetailsAsync(invoiceId);
+            
+            if (invoice == null)
+            {
+                _logger.LogWarning("Invoice not found with ID: {InvoiceId}", invoiceId);
+                return null;
+            }
+            
+            _logger.LogInformation("Successfully retrieved invoice {InvoiceId} for room {RoomNumber}", invoice.Id, invoice.Room?.RoomNumber);
+            return invoice;
+        }
     }
 }

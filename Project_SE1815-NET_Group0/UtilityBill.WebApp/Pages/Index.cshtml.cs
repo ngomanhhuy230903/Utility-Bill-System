@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace UtilityBill.WebApp.Pages
 {
@@ -14,7 +16,6 @@ namespace UtilityBill.WebApp.Pages
 
         public void OnGet()
         {
-
         }
     }
 }

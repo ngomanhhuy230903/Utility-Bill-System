@@ -1,0 +1,211 @@
+@page "/Invoices/Pay/{id:guid}"
+@model UtilityBill.WebApp.Pages.Invoices.PayModel
+@{
+    ViewData["Title"] = "Pay Invoice";
+}
+
+@* Add anti-forgery token for AJAX requests *@
+@Html.AntiForgeryToken()
+
+<div class="container mt-4">
+    @if (Model.Invoice == null)
+    {
+        <div class="alert alert-danger">
+            <h4>Invoice Not Found</h4>
+            <p>The invoice you're looking for could not be found.</p>
+            <a href="/Invoices" class="btn btn-primary">Back to Invoices</a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Invoice Details -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Invoice Details</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Invoice ID:</strong> @Model.Invoice.Id.ToString().Substring(0, 8).ToUpper()</p>
+                                <p><strong>Room:</strong> @Model.Invoice.Room.RoomNumber</p>
+                                <p><strong>Block:</strong> @Model.Invoice.Room.Block</p>
+                                <p><strong>Floor:</strong> @Model.Invoice.Room.Floor</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Period:</strong> @Model.Invoice.InvoicePeriodMonth/@Model.Invoice.InvoicePeriodYear</p>
+                                <p><strong>Due Date:</strong> @Model.Invoice.DueDate.ToString("dd/MM/yyyy")</p>
+                                <p><strong>Status:</strong> 
+                                    <span class="badge @(Model.Invoice.Status == "Paid" ? "bg-success" : Model.Invoice.Status == "Pending" ? "bg-warning" : "bg-danger")">
+                                        @Model.Invoice.Status
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Invoice Items -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Invoice Items</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th class="text-end">Quantity</th>
+                                        <th class="text-end">Unit Price</th>
+                                        <th class="text-end">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.Invoice.InvoiceDetails)
+                                    {
+                                        <tr>
+                                            <td>@item.Description</td>
+                                            <td class="text-end">@item.Quantity.ToString("N2")</td>
+                                            <td class="text-end">@item.UnitPrice.ToString("N0") VND</td>
+                                            <td class="text-end">@item.Amount.ToString("N0") VND</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-primary">
+                                        <th colspan="3" class="text-end">Total Amount:</th>
+                                        <th class="text-end">@Model.Invoice.TotalAmount.ToString("N0") VND</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Payment Options -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Payment Options</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Invoice.Status == "Paid")
+                        {
+                            <div class="alert alert-success">
+                                <h6>✅ Payment Completed</h6>
+                                <p>This invoice has already been paid.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mb-3">
+                                <h6>Total Amount: <span class="text-primary">@Model.Invoice.TotalAmount.ToString("N0") VND</span></h6>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <!-- VnPay Payment -->
+                                <button type="button" class="btn btn-primary btn-lg" onclick="payWithVnPay()">
+                                    <i class="fas fa-credit-card"></i> Pay with VnPay
+                                </button>
+
+                                <!-- MoMo Payment -->
+                                <button type="button" class="btn btn-danger btn-lg" onclick="payWithMomo()">
+                                    <i class="fas fa-mobile-alt"></i> Pay with MoMo
+                                </button>
+
+                                <!-- Cash Payment -->
+                                <button type="button" class="btn btn-success btn-lg" onclick="payWithCash()">
+                                    <i class="fas fa-money-bill-wave"></i> Pay with Cash
+                                </button>
+                            </div>
+
+                            <div class="mt-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i>
+                                    Cash payments will be marked as "Unpaid" and require manual confirmation.
+                                </small>
+                            </div>
+                        }
+
+                        <hr>
+                        <div class="d-grid">
+                            <a href="/Invoices" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Invoices
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function payWithVnPay() {
+            if (confirm('Proceed with VnPay payment?')) {
+                createUnifiedPayment('VNPAY');
+            }
+        }
+
+        function payWithMomo() {
+            if (confirm('Proceed with MoMo payment?')) {
+                createUnifiedPayment('MOMO');
+            }
+        }
+
+        function payWithCash() {
+            if (confirm('Record cash payment? This will mark the payment as "Unpaid" and require manual confirmation.')) {
+                createUnifiedPayment('CASH');
+            }
+        }
+
+        async function createUnifiedPayment(paymentMethod) {
+            try {
+                const formData = new FormData();
+                formData.append('paymentMethod', paymentMethod);
+
+                const response = await fetch('?handler=Payment', {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        if (paymentMethod === 'CASH') {
+                            alert('Cash payment recorded successfully! Please complete the payment in person.');
+                            window.location.href = '/Billing';
+                        } else if (result.data && result.data.paymentResponse) {
+                            if (result.data.paymentResponse.redirectUrl) {
+                                // Redirect to payment gateway
+                                window.location.href = result.data.paymentResponse.redirectUrl;
+                            } else if (result.data.paymentResponse.payUrl) {
+                                // MoMo payment URL
+                                window.location.href = result.data.paymentResponse.payUrl;
+                            } else {
+                                alert('Payment initiated successfully!');
+                            }
+                        } else {
+                            alert('Payment initiated successfully!');
+                        }
+                    } else {
+                        alert(`Payment failed: ${result.message}`);
+                    }
+                } else {
+                    alert('An error occurred while processing the payment. Please try again.');
+                }
+            } catch (error) {
+                console.error('Payment error:', error);
+                alert('An error occurred while processing the payment. Please try again.');
+            }
+        }
+    </script>
+} 

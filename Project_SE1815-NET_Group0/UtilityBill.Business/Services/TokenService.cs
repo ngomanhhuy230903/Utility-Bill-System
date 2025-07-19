@@ -14,7 +14,6 @@ namespace UtilityBill.Business.Services
 {
     public class TokenService : ITokenService
     {
-        private readonly IConfiguration _config;
         private readonly SymmetricSecurityKey _key;
         private readonly string _issuer;
         private readonly string _audience;
@@ -41,8 +40,8 @@ namespace UtilityBill.Business.Services
                 Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.Now.AddDays(7),
                 SigningCredentials = creds,
-                Issuer = _config["Jwt:Issuer"],
-                Audience = _config["Jwt:Audience"]
+                Issuer = _issuer,
+                Audience = _audience
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();

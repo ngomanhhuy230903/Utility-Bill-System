@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using UtilityBill.Data.Enums;
 
 namespace UtilityBill.Data.Models;
 
@@ -13,7 +12,7 @@ public partial class Payment
 
     public decimal Amount { get; set; }
 
-    public string PaymentMethod { get; set; } = null!;
+    public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.NONE;
 
     public string? TransactionCode { get; set; }
 

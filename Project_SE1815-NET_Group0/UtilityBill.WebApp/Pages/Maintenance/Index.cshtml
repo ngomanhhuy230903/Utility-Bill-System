@@ -2,39 +2,81 @@
 @model UtilityBill.WebApp.Pages.Maintenance.IndexModel
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @{
-    
 }
 
-<div class="mb-4">
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#scheduleModal">Lên lịch bảo trì</button>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="text-primary">Lịch Bảo Trì</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#scheduleModal">
+            <i class="bi bi-calendar-plus me-1"></i> Lên lịch bảo trì
+        </button>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-0">
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Lịch bảo trì trong tháng</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tiêu đề</th>
+                            <th>Phòng/Block</th>
+                            <th>Thời gian</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedule-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
-
-<div id="calendar"></div>
-
-<h4 class="mt-4">Lịch bảo trì trong tháng</h4>
-<table class="table table-bordered" style="margin-bottom: 100px;">
-    <thead>
-        <tr><th>Tiêu đề</th><th>Phòng/Block</th><th>Thời gian</th><th>Trạng thái</th></tr>
-    </thead>
-    <tbody id="schedule-table-body"></tbody>
-</table>
 
 <!-- Modal Lên lịch mới -->
 <div class="modal fade" id="scheduleModal" tabindex="-1">
     <div class="modal-dialog">
         <form id="schedule-form" class="modal-content">
-            <div class="modal-header"><h5>Lên lịch bảo trì</h5></div>
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Lên lịch bảo trì</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
             <div class="modal-body">
-                <label>Tiêu đề: <input name="title" class="form-control" required /></label>
-                <label>Phòng ID (optional): <input name="roomId" type="number" class="form-control" /></label>
-                <label>Block (optional): <input name="block" class="form-control" /></label>
-                <label>Thời gian bắt đầu: <input name="scheduledStart" type="datetime-local" class="form-control" required /></label>
-                <label>Thời gian kết thúc: <input name="scheduledEnd" type="datetime-local" class="form-control" required /></label>
-                <label>Mô tả: <textarea name="description" class="form-control"></textarea></label>
+                <div class="mb-3">
+                    <label class="form-label">Tiêu đề</label>
+                    <input name="title" class="form-control" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Phòng ID (tuỳ chọn)</label>
+                    <input name="roomId" type="number" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Block (tuỳ chọn)</label>
+                    <input name="block" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Thời gian bắt đầu</label>
+                    <input name="scheduledStart" type="datetime-local" class="form-control" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Thời gian kết thúc</label>
+                    <input name="scheduledEnd" type="datetime-local" class="form-control" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Mô tả</label>
+                    <textarea name="description" class="form-control" rows="3"></textarea>
+                </div>
                 <input type="hidden" name="createdByUserId" value="@User.FindFirst("sub")?.Value" />
             </div>
             <div class="modal-footer">
-                <button type="submit" class="btn btn-success">Lưu</button>
+                <button type="submit" class="btn btn-success">Lưu lịch</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
             </div>
         </form>
@@ -82,12 +124,13 @@
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'vi',
+                height: 600,
                 dateClick: function (info) {
                     $('#scheduleModal').modal('show');
                 },
-                datesSet: function (info) {
-                    const d = info.start;
-                    loadCalendar(d.getFullYear(), d.getMonth());
+                datesSet: function () {
+                    const currentDate = calendar.getDate();
+                    loadCalendar(currentDate.getFullYear(), currentDate.getMonth());
                 }
             });
             calendar.render();

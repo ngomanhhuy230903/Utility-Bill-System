@@ -21,6 +21,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
         options.SlidingExpiration = true; // Gia hạn thời gian nếu người dùng hoạt động
+        options.Cookie.Name = ".AspNetCore.Cookies";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
     });
 
 // Dịch vụ để 'đọc' được HttpContext hiện tại (cần cho việc lấy Token từ Cookie)

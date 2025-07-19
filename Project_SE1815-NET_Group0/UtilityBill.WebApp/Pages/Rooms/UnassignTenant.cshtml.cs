@@ -17,7 +17,7 @@ namespace UtilityBill.WebApp.Pages.Rooms
         }
 
         [BindProperty]
-        public RoomDto Room { get; set; }
+        public RoomDto? Room { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int roomId)
         {

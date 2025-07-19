@@ -1,0 +1,281 @@
+@page
+@model UtilityBill.WebApp.Pages.Admin.NotificationsModel
+@{
+    ViewData["Title"] = "Send Notifications";
+}
+
+<div class="container mt-4">
+    <h2><i class="bi bi-bell"></i> Send Push Notifications</h2>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Send Notification</h5>
+                </div>
+                <div class="card-body">
+                    <form id="notificationForm">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title *</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="body" class="form-label">Message *</label>
+                            <textarea class="form-control" id="body" name="body" rows="3" required></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="icon" class="form-label">Icon URL</label>
+                            <input type="url" class="form-control" id="icon" name="icon" placeholder="https://example.com/icon.png">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="tag" class="form-label">Tag</label>
+                            <input type="text" class="form-control" id="tag" name="tag" placeholder="notification-tag">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="data" class="form-label">Additional Data (JSON)</label>
+                            <textarea class="form-control" id="data" name="data" rows="2" placeholder='{"url": "/some-page"}'></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Send To</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="sendTo" id="sendToAll" value="all" checked>
+                                <label class="form-check-label" for="sendToAll">
+                                    All Users
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="sendTo" id="sendToSpecific" value="specific">
+                                <label class="form-check-label" for="sendToSpecific">
+                                    Specific Users
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3" id="userSelection" style="display: none;">
+                            <label for="userIds" class="form-label">Select Users</label>
+                            <select class="form-select" id="userIds" name="userIds" multiple>
+                                <!-- Will be populated dynamically -->
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i> Send Notification
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Notification Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Total Subscriptions:</strong>
+                        <span id="totalSubscriptions">Loading...</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Last Sent:</strong>
+                        <span id="lastSent">Never</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Success Rate:</strong>
+                        <span id="successRate">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Quick Templates</h5>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-outline-secondary btn-sm mb-2 w-100" onclick="loadTemplate('invoice')">
+                        New Invoice Available
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm mb-2 w-100" onclick="loadTemplate('maintenance')">
+                        Maintenance Reminder
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm mb-2 w-100" onclick="loadTemplate('payment')">
+                        Payment Due Reminder
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm mb-2 w-100" onclick="loadTemplate('general')">
+                        General Announcement
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Notification templates
+        const templates = {
+            invoice: {
+                title: "New Invoice Available",
+                body: "Your monthly utility bill has been generated. Please check your account for details.",
+                tag: "invoice-notification",
+                data: '{"url": "/Billing"}'
+            },
+            maintenance: {
+                title: "Maintenance Reminder",
+                body: "Scheduled maintenance will be performed tomorrow. Please prepare accordingly.",
+                tag: "maintenance-notification",
+                data: '{"url": "/Maintenance"}'
+            },
+            payment: {
+                title: "Payment Due Reminder",
+                body: "Your utility bill payment is due in 3 days. Please make payment to avoid late fees.",
+                tag: "payment-notification",
+                data: '{"url": "/Billing"}'
+            },
+            general: {
+                title: "General Announcement",
+                body: "Important announcement from management. Please check your account for details.",
+                tag: "general-notification",
+                data: '{"url": "/"}'
+            }
+        };
+
+        // Load template
+        function loadTemplate(templateName) {
+            const template = templates[templateName];
+            if (template) {
+                document.getElementById('title').value = template.title;
+                document.getElementById('body').value = template.body;
+                document.getElementById('tag').value = template.tag;
+                document.getElementById('data').value = template.data;
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('notificationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const notification = {
+                title: formData.get('title'),
+                body: formData.get('body'),
+                icon: formData.get('icon') || null,
+                tag: formData.get('tag') || null,
+                data: formData.get('data') || null,
+                userIds: null
+            };
+            
+            const sendTo = formData.get('sendTo');
+            if (sendTo === 'specific') {
+                const userIds = Array.from(document.getElementById('userIds').selectedOptions).map(option => option.value);
+                notification.userIds = userIds;
+            }
+            
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/PushNotification/send`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(notification)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`Notification sent successfully!\nSent: ${result.sentCount}, Failed: ${result.failedCount}`);
+                    this.reset();
+                } else {
+                    // Fallback to browser notification
+                    this.sendBrowserNotification(notification.title, notification.body);
+                    alert('API failed, sent browser notification instead');
+                }
+            } catch (error) {
+                console.error('Error sending notification:', error);
+                // Fallback to browser notification
+                this.sendBrowserNotification(notification.title, notification.body);
+                alert('Error sending notification, sent browser notification instead');
+            }
+        });
+
+        // Handle send to selection
+        document.querySelectorAll('input[name="sendTo"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const userSelection = document.getElementById('userSelection');
+                if (this.value === 'specific') {
+                    userSelection.style.display = 'block';
+                    loadUsers();
+                } else {
+                    userSelection.style.display = 'none';
+                }
+            });
+        });
+
+        // Load users for selection
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/User`);
+                if (response.ok) {
+                    const users = await response.json();
+                    const select = document.getElementById('userIds');
+                    select.innerHTML = '';
+                    
+                    users.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.textContent = `${user.fullName} (${user.userName})`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/PushNotification/subscriptions`);
+                if (response.ok) {
+                    const subscriptions = await response.json();
+                    document.getElementById('totalSubscriptions').textContent = subscriptions.length;
+                }
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStatistics();
+        });
+
+        // Browser notification fallback
+        function sendBrowserNotification(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                const notification = new Notification(title, {
+                    body: body,
+                    icon: '/favicon.ico',
+                    badge: '/favicon.ico',
+                    tag: 'admin-notification',
+                    requireInteraction: true
+                });
+
+                notification.onclick = function() {
+                    window.focus();
+                    notification.close();
+                };
+
+                console.log(`Browser notification sent: ${title}`);
+                return true;
+            } else {
+                console.log('Browser notifications not available or permission denied');
+                return false;
+            }
+        }
+    </script>
+} 

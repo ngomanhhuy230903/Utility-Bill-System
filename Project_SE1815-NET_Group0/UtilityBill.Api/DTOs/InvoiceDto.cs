@@ -1,5 +1,14 @@
 ﻿namespace UtilityBill.Api.DTOs
 {
+    public class InvoiceDetailDto
+    {
+        public int Id { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public decimal Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+        public decimal Amount { get; set; }
+    }
+
     public class InvoiceDto
     {
         public Guid Id { get; set; }
@@ -9,6 +18,7 @@
         public int InvoicePeriodYear { get; set; }
         public DateTime DueDate { get; set; }
         public decimal TotalAmount { get; set; }
-        public string Status { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public List<InvoiceDetailDto> InvoiceDetails { get; set; } = new List<InvoiceDetailDto>();
     }
 }

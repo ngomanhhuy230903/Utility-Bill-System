@@ -9,6 +9,10 @@ using UtilityBill.Business.Services;
 using UtilityBill.Data.Context;
 using UtilityBill.Data.Repositories;
 using QuestPDF.Infrastructure;
+using UtilityBill.Api.Services.Momo;
+using UtilityBill.Api.Services.VnPay;
+using UtilityBill.Data.Models.Momo;
+
 using UtilityBill.Business.Settings;
 using Microsoft.AspNetCore.Identity;
 using UtilityBill.Data.Models;
@@ -35,13 +39,17 @@ builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 builder.Services.AddSingleton<IBillingConfigService, BillingConfigService>(); // Thêm lại dòng này nếu bạn đã xóa
 builder.Services.AddScoped<IPdfService, PdfService>();
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
-builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 // Thay thế đăng ký Email Service cũ bằng cái mới
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 // Đăng ký service nghiệp vụ
 builder.Services.AddScoped<IBillingService, BillingService>();
 // Đăng ký Automapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+// Register push notification services
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
+
 // Đăng ký background job
 builder.Services.AddHostedService<MonthlyBillingJob>();
 
@@ -61,31 +69,28 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 builder.Services.AddAuthorization();
-var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
+// Add CORS to allow WebApp to access API
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: MyAllowSpecificOrigins,
-                      policy =>
-                      {
-                          policy.WithOrigins("https://localhost:7240")
-                                .AllowAnyHeader()
-                                .AllowAnyMethod();
-                      });
+    options.AddPolicy("AllowWebApp", policy =>
+    {
+        policy.WithOrigins("https://localhost:7082", "http://localhost:5164")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
 });
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.WithOrigins("https://localhost:7082") // nếu thay đổi port FE thì cần cập nhật lại
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
+//Connect MOMO API
+builder.Services.Configure<MomoOptionModel>(builder.Configuration.GetSection("MomoAPI"));
+builder.Services.AddScoped<IMomoService, MomoService>();
+//Connect VNPay API
+builder.Services.AddScoped<IVnPayService, VnPayService>();
 
 // Thêm Hangfire vào DI container
 builder.Services.AddHangfire(config =>
@@ -105,8 +110,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors(MyAllowSpecificOrigins);
-app.UseCors("AllowFrontend");
+app.UseCors("AllowWebApp");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
