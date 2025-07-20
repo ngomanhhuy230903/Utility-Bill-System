@@ -1,0 +1,67 @@
+﻿@page
+@model UtilityBill.WebApp.Pages.MeterReading.MeterReadModel
+@inject IConfiguration Configuration
+
+<h1>Nhập Chỉ Số Điện/Nước</h1>
+
+<form id="manualForm">
+    <div class="mb-3">
+        <label>Room ID</label>
+        <input id="roomId" type="number" class="form-control" required />
+    </div>
+    <div class="row mb-3">
+        <div class="col">
+            <label>Tháng</label>
+            <input id="month" type="number" class="form-control" min="1" max="12" required />
+        </div>
+        <div class="col">
+            <label>Năm</label>
+            <input id="year" type="number" class="form-control" min="2000" max="2100" required />
+        </div>
+    </div>
+    <div class="mb-3">
+        <label>Chỉ số Điện</label>
+        <input id="electricReading" type="number" step="0.01" class="form-control" required />
+    </div>
+    <div class="mb-3">
+        <label>Chỉ số Nước</label>
+        <input id="waterReading" type="number" step="0.01" class="form-control" required />
+    </div>
+    <div class="mb-3">
+        <label>Ngày Ghi</label>
+        <input id="readingDate" type="date" class="form-control" required />
+    </div>
+    <button type="submit" class="btn btn-primary">Lưu</button>
+    <span id="formResult" class="ms-3"></span>
+</form>
+
+@section Scripts {
+    <script>
+        const apiBase = '@Configuration["ApiBaseUrl"]';
+
+        document.getElementById('manualForm')
+            .addEventListener('submit', async e => {
+                e.preventDefault();
+                const payload = {
+                    roomId: +roomId.value,
+                    readingMonth: +month.value,
+                    readingYear: +year.value,
+                    electricReading: +electricReading.value,
+                    waterReading: +waterReading.value,
+                    readingDate: readingDate.value,
+                    recordedByUserId: 'admin-user-guid'
+                };
+                try {
+                    const res = await fetch(`${apiBase}/meterreading`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw await res.text();
+                    formResult.innerText = 'Đã lưu thành công!';
+                } catch (err) {
+                    formResult.innerText = 'Lỗi: ' + err;
+                }
+            });
+    </script>
+}

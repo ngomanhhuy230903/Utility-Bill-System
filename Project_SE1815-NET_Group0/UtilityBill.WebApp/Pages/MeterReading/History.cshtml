@@ -1,0 +1,95 @@
+﻿@page
+@model UtilityBill.WebApp.Pages.Meters.HistoryModel
+@inject IConfiguration Configuration
+
+<h1>Lịch Sử Chỉ Số</h1>
+
+<div class="row mb-3">
+    <div class="col">
+        <select id="filterMonth" class="form-select">
+            <option value="">--Tháng--</option>
+            @for (int m = 1; m <= 12; m++)
+            {
+                <option>@m</option>
+            }
+        </select>
+    </div>
+    <div class="col">
+        <select id="filterYear" class="form-select">
+            <option value="">--Năm--</option>
+            @for (int y = DateTime.Now.Year - 2; y <= DateTime.Now.Year + 1; y++)
+            {
+                <option>@y</option>
+            }
+        </select>
+    </div>
+    <div class="col">
+        <button id="btnFilter" class="btn btn-secondary">Lọc</button>
+    </div>
+</div>
+
+<div id="historyTable"></div>
+
+@section Scripts {
+    <script>
+        const apiBase = '@Configuration["ApiBaseUrl"]';
+        const pageSize = 10;
+
+        async function loadHistory(month = '', year = '', page = 1) {
+            let url = `${apiBase}/meterreading?page=${page}&pageSize=${pageSize}`;
+            if (month) url += `&month=${month}`;
+            if (year) url += `&year=${year}`;
+            const res = await fetch(url);
+            const { items, totalCount } = await res.json();
+
+            // render table
+            const rows = items.map(r => `
+              <tr>
+                <td>${r.id}</td><td>${r.roomId}</td>
+                <td>${r.readingMonth}/${r.readingYear}</td>
+                <td>${r.electricReading}</td>
+                <td>${r.waterReading}</td>
+                <td>${new Date(r.readingDate).toLocaleDateString()}</td>
+              </tr>`).join('');
+            document.getElementById('historyTable').innerHTML = `
+              <table class="table table-sm">
+                <thead><tr>
+                  <th>ID</th><th>Room</th><th>Tháng/Năm</th>
+                  <th>Điện</th><th>Nước</th><th>Ngày</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+              </table>`;
+
+            // pagination
+            const totalPages = Math.ceil(totalCount / pageSize);
+            let pager = `<nav><ul class="pagination">`;
+            pager += `<li class="page-item ${page === 1 ? 'disabled' : ''}">
+              <a class="page-link" href="#" data-page="${page - 1}">Prev</a></li>`;
+            for (let p = 1; p <= totalPages; p++) {
+                pager += `<li class="page-item ${p === page ? 'active' : ''}">
+                <a class="page-link" href="#" data-page="${p}">${p}</a></li>`;
+            }
+            pager += `<li class="page-item ${page === totalPages ? 'disabled' : ''}">
+              <a class="page-link" href="#" data-page="${page + 1}">Next</a></li>`;
+            pager += `</ul></nav>`;
+            document.getElementById('historyTable')
+                .insertAdjacentHTML('beforeend', pager);
+
+            document.querySelectorAll('.pagination a').forEach(a => {
+                a.onclick = e => {
+                    e.preventDefault();
+                    const p = +e.target.dataset.page;
+                    if (p >= 1 && p <= totalPages) loadHistory(month, year, p);
+                };
+            });
+        }
+
+        document.getElementById('btnFilter').onclick = () => {
+            const m = filterMonth.value;
+            const y = filterYear.value;
+            loadHistory(m, y, 1);
+        };
+
+        document.addEventListener('DOMContentLoaded', () => loadHistory());
+    </script>
+}

@@ -1,0 +1,16 @@
+﻿@page
+@model UtilityBill.WebApp.Pages.Meters.CsvUploadModel
+@inject IConfiguration Configuration
+
+<h1>Bulk Upload CSV</h1>
+
+<form asp-page-handler="Upload" method="post" enctype="multipart/form-data">
+    <div class="mb-3">
+        <input type="file" name="file" accept=".csv" class="form-control" required />
+    </div>
+    <button type="submit" class="btn btn-primary">Tải lên CSV</button>
+</form>
+@if (Model.Message != null)
+{
+    <div class="alert alert-info mt-3">@Model.Message</div>
+}
