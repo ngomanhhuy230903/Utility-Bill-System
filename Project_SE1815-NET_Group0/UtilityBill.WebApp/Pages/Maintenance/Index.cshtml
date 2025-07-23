@@ -8,7 +8,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="text-primary">Lịch Bảo Trì</h2>
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#scheduleModal">
-            <i class="bi bi-calendar-plus me-1"></i> Lên lịch bảo trì
+            <i class="bi bi-calendar-plus me-1"></i> Schedule maintenance
         </button>
     </div>
 
@@ -20,17 +20,20 @@
 
     <div class="card shadow-sm">
         <div class="card-header bg-light">
-            <h5 class="mb-0">Lịch bảo trì trong tháng</h5>
+            <h5 class="mb-0">Monthly Maintenance Schedule</h5>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-bordered table-hover mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Tiêu đề</th>
-                            <th>Phòng/Block</th>
-                            <th>Thời gian</th>
-                            <th>Trạng thái</th>
+                            <th>Title</th>
+                            <th>Room/Block</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                            <th>
+                                Feature
+                            </th>
                         </tr>
                     </thead>
                     <tbody id="schedule-table-body"></tbody>
@@ -115,9 +118,43 @@
                             <td>${i.roomId || i.block || '-'}</td>
                             <td>${new Date(i.scheduledStart).toLocaleString()} - ${new Date(i.scheduledEnd).toLocaleString()}</td>
                             <td>${i.status}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning me-1" onclick="editSchedule(${i.id})">Update</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteSchedule(${i.id})">Delete</button>
+                            </td>
                         </tr>`);
                     });
                 });
+        }
+
+        function editSchedule(id) {
+            fetch(`${apiBase}/maintenance/${id}`)
+                .then(r => r.json())
+                .then(data => {
+                    const form = $('#schedule-form')[0];
+                    form.reset();
+
+                    form.elements['title'].value = data.title;
+                    form.elements['roomId'].value = data.roomId || '';
+                    form.elements['block'].value = data.block || '';
+                    form.elements['scheduledStart'].value = data.scheduledStart.slice(0, 16); // yyyy-MM-ddTHH:mm
+                    form.elements['scheduledEnd'].value = data.scheduledEnd.slice(0, 16);
+                    form.elements['description'].value = data.description || '';
+                    form.elements['createdByUserId'].value = data.createdByUserId;
+
+                    form.dataset.editId = id;
+                    $('#scheduleModal').modal('show');
+                });
+        }
+
+        function deleteSchedule(id) {
+            if (!confirm("Bạn có chắc chắn muốn xoá lịch này không?")) return;
+            fetch(`${apiBase}/maintenance/${id}`, {
+                method: 'DELETE'
+            }).then(() => {
+                calendar.refetchEvents();
+                window.location.reload();
+            });
         }
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -142,13 +179,20 @@
                 obj[item.name] = item.value;
                 return obj;
             }, {});
-            fetch(`${apiBase}/maintenance/create`, {
-                method: 'POST',
+
+            const method = this.dataset.editId ? 'PUT' : 'POST';
+            const url = this.dataset.editId
+                        ? `${apiBase}/maintenance/${this.dataset.editId}`
+                        : `${apiBase}/maintenance/create`;
+            fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             }).then(() => {
                 $('#scheduleModal').modal('hide');
+                delete this.dataset.editId;
                 calendar.refetchEvents();
+                window.location.reload();
             });
         });
     </script>

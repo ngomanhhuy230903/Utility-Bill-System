@@ -10,6 +10,7 @@ namespace UtilityBill.Business.Services
 {
     public interface IMaintenanceScheduleService
     {
+        public Task<MaintenanceSchedule> GetById(int id);
         public Task<int> Create(MaintenanceSchedule schedule);
         public Task<int> Update(MaintenanceSchedule schedule);
         public Task<int> Delete(MaintenanceSchedule schedule);

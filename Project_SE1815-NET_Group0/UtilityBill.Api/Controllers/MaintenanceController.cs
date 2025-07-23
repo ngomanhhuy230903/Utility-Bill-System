@@ -18,23 +18,82 @@ namespace UtilityBill.Api.Controllers
             _maintenanceScheduleService = maintenanceScheduleService;
         }
 
+        [HttpGet]
+        [Route("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var data = await _maintenanceScheduleService.GetById(id);
+            return Ok(data);
+        }
+
         [HttpPost("create")]
         public async Task<IActionResult> CreateSchedule([FromBody] MaintenanceScheduleDTO dto)
         {
-            var schedule = new MaintenanceSchedule
+            try
             {
-                RoomId = dto.RoomId,
-                Block = dto.Block,
-                Title = dto.Title,
-                Description = dto.Description,
-                ScheduledStart = dto.ScheduledStart,
-                ScheduledEnd = dto.ScheduledEnd,
-                Status = "Scheduled",
-                CreatedByUserId = "admin-user-guid"
-            };
+                var schedule = new MaintenanceSchedule
+                {
+                    RoomId = dto.RoomId,
+                    Block = dto.Block,
+                    Title = dto.Title,
+                    Description = dto.Description,
+                    ScheduledStart = dto.ScheduledStart,
+                    ScheduledEnd = dto.ScheduledEnd,
+                    Status = "Scheduled",
+                    CreatedByUserId = "admin-user-guid"
+                };
 
-            await _maintenanceScheduleService.Create(schedule);
-            return Ok(schedule);
+                await _maintenanceScheduleService.Create(schedule);
+                return Ok(schedule);
+            }
+            catch (Exception e)
+            {
+                return BadRequest();
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateSchedule([FromBody] MaintenanceScheduleDTO schedule, int? id)
+        {
+
+            try
+            {
+                if (id == null || id <= 0)
+                {
+                    return BadRequest("Invalid schedule ID");
+                }
+                var existing = await _maintenanceScheduleService.GetById(id.Value);
+                if (existing == null)
+                {
+                    throw new Exception("Schedule not found");
+                }
+
+                // Update fields
+                existing.Title = schedule.Title;
+                existing.Description = schedule.Description;
+                existing.ScheduledStart = schedule.ScheduledStart;
+                existing.ScheduledEnd = schedule.ScheduledEnd;
+                existing.RoomId = schedule.RoomId;
+
+                await _maintenanceScheduleService.Update(existing);
+                return Ok(existing);
+            }
+            catch (Exception e)
+            {
+                return BadRequest();
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteSchedule(int id)
+        {
+            var existing = await _maintenanceScheduleService.GetById(id);
+            if (existing == null)
+            {
+                return NotFound("Schedule not found");
+            }
+            await _maintenanceScheduleService.Delete(existing);
+            return Ok();
         }
 
         [HttpGet("calendar")]
