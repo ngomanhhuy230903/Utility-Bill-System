@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-
-using System.Text;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using UtilityBill.Business.DTOs;
@@ -29,7 +28,7 @@ namespace UtilityBill.Business.Services
 
         public async Task<IEnumerable<MeterReadingReadDto>> GetMeterReadingsAsync(int? month = null, int? year = null)
         {
-            var entities = await _repo.GetAllAsync();        
+            var entities = await _repo.GetAllAsync();
             if (month.HasValue)
                 entities = entities.Where(e => e.ReadingMonth == month.Value);
             if (year.HasValue)
@@ -47,38 +46,69 @@ namespace UtilityBill.Business.Services
 
         public async Task<MeterReadingReadDto> CreateMeterReadingAsync(MeterReadingCreateDto dto)
         {
+            // 1. Ensure room exists
+            var roomExists = await _uow.RoomRepository.GetByIdAsync(dto.RoomId);
+            if (roomExists is null)
+                throw new KeyNotFoundException($"Room with ID {dto.RoomId} not found.");
+
+            // 2. Prevent duplicate reading for same room/month/year
+            var already = await _repo.GetByRoomAndMonthAsync(dto.RoomId, dto.ReadingYear, dto.ReadingMonth);
+            if (already is not null)
+                throw new InvalidOperationException(
+                    $"A reading for Room {dto.RoomId}, {dto.ReadingMonth}/{dto.ReadingYear} already exists.");
+
+            // 3. Map, add, and save
             var entity = _mapper.Map<MeterReading>(dto);
             await _repo.AddAsync(entity);
             await _uow.SaveChangesAsync();
+
             return _mapper.Map<MeterReadingReadDto>(entity);
         }
 
-        public async Task<bool> UpdateMeterReadingAsync(int id, MeterReadingCreateDto dto)
+        public async Task<bool> UpdateMeterReadingAsync(
+            int roomId,
+            int readingYear,
+            int readingMonth,
+            MeterReadingUpdateDto dto)
         {
-            var entity = await _repo.GetByIdAsync(id);
-            if (entity is null) return false;
+            // 1. Look up the existing reading by composite key
+            var entity = await _repo.GetByRoomAndMonthAsync(roomId, readingYear, readingMonth);
+            if (entity is null)
+                return false;
 
-            _mapper.Map(dto, entity);
+            // 2. Update allowed fields
+            entity.ElectricReading = dto.ElectricReading;
+            entity.WaterReading = dto.WaterReading;
+            entity.ReadingDate = dto.ReadingDate;
+            entity.RecordedByUserId = dto.RecordedByUserId;
+
+            // 3. Persist changes
             _repo.Update(entity);
-            var count = await _uow.SaveChangesAsync();
-            return count > 0;
+            var changes = await _uow.SaveChangesAsync();
+            return changes > 0;
         }
 
-        public async Task<bool> DeleteMeterReadingAsync(int id)
+        public async Task<bool> DeleteMeterReadingAsync(
+            int roomId,
+            int readingYear,
+            int readingMonth)
         {
-            var entity = await _repo.GetByIdAsync(id);
-            if (entity is null) return false;
+            // 1. Find the entity
+            var entity = await _repo.GetByRoomAndMonthAsync(roomId, readingYear, readingMonth);
+            if (entity == null) return false;
 
+            // 2. Delete
             _repo.Delete(entity);
-            var count = await _uow.SaveChangesAsync();
-            return count > 0;
+            var changes = await _uow.SaveChangesAsync();
+            return changes > 0;
         }
 
         public async Task<(int successCount, int failCount)> BulkCreateMeterReadingsAsync(IList<MeterReadingUploadDto> dtos)
         {
             int success = 0, fail = 0;
 
-            foreach (var upload in dtos) {
+            foreach (var upload in dtos)
+            {
                 // 1. Resolve RoomNumber → RoomId
                 var room = await _uow.RoomRepository.GetByRoomNumberAsync(upload.RoomNumber);
                 if (room == null)
@@ -96,8 +126,7 @@ namespace UtilityBill.Business.Services
                     ElectricReading = upload.ElectricReading,
                     WaterReading = upload.WaterReading,
                     ReadingDate = upload.ReadingDate,
-                    RecordedByUserId = /* pull from current user context or a system user */
-                        "admin-user-guid"
+                    RecordedByUserId = "admin-user-guid"
                 };
 
                 try
@@ -110,10 +139,22 @@ namespace UtilityBill.Business.Services
                     // e.g. unique constraint violation
                     fail++;
                 }
-                
             }
+
             return (success, fail);
         }
-    }
 
+        public async Task<MeterReadingReadDto?> GetByRoomAndPeriodAsync(int roomId, int year, int month)
+        {
+            var entity = await _repo.GetByRoomAndMonthAsync(roomId, year, month);
+            return entity is null
+                ? null
+                : _mapper.Map<MeterReadingReadDto>(entity);
+        }
+
+        public async Task<IList<ConsumptionReportDto>> GetConsumptionReportAsync(DateTime from, DateTime to, string groupBy)
+        {
+            return await _repo.GetConsumptionReport(from, to, groupBy);
+        }
+    }
 }
