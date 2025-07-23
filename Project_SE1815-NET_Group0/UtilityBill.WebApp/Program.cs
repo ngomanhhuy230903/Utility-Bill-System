@@ -4,7 +4,12 @@ using UtilityBill.WebApp.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Thêm các dịch vụ cần thiết vào container.
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages()
+    .AddRazorPagesOptions(options =>
+    {
+        // Map the Index page to the root URL
+        options.Conventions.AddPageRoute("/Index", "");
+    });
 
 // Cấu hình HttpClient để gọi API
 // !!! QUAN TRỌNG: Hãy đảm bảo số cổng (ví dụ: 7240) khớp chính xác với cổng API của bạn.
@@ -12,7 +17,6 @@ builder.Services.AddHttpClient("ApiClient", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7240/api/");
 });
-
 // Cấu hình xác thực bằng Cookie cho WebApp
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>

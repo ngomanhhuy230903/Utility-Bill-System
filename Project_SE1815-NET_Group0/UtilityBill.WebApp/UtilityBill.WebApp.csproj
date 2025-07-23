@@ -6,4 +6,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="33.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UtilityBill.Business\UtilityBill.Business.csproj" />
+    <ProjectReference Include="..\UtilityBill.Data\UtilityBill.Data.csproj" />
+  </ItemGroup>
+
 </Project>

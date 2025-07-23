@@ -1,0 +1,85 @@
+﻿@page "/MeterReading/History"
+@model UtilityBill.WebApp.Pages.MeterReading.HistoryModel
+
+<!-- @{
+    // DEBUG: What did the browser actually send?
+   var qs = HttpContext.Request.QueryString.Value;
+    var pg = HttpContext.Request.Query["pageIndex"].ToString();
+    }-->
+
+<div class="container mt-4">
+
+    <h2 class="mb-4">Lịch sử chỉ số</h2>
+
+    <!-- Debugging block -->
+  <!--  <pre>
+QueryString: @qs
+pageIndex:    @pg
+CurrentPage:  @Model.PageIndex
+      </pre>-->
+
+   <div class="mb-3">
+    <!-- use href instead of asp-page -->
+    <a href="/Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left-circle"></i> Quay lại
+    </a>
+</div>
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-auto">
+            <label class="form-label">Tháng</label>
+            <select asp-for="SelectedMonth" asp-items="Model.MonthList" class="form-select">
+                <option value="">Tất cả</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <label class="form-label">Năm</label>
+            <select asp-for="SelectedYear" asp-items="Model.YearList" class="form-select">
+                <option value="">Tất cả</option>
+            </select>
+        </div>
+        <div class="col-auto align-self-end">
+            <button type="submit" class="btn btn-primary">Lọc</button>
+        </div>
+    </form>
+
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>Phòng</th>
+                <th>Tháng/Năm</th>
+                <th>Điện (kWh)</th>
+                <th>Nước (m³)</th>
+                <th>Ngày ghi</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.RoomId</td>
+                    <td>@item.ReadingMonth/@item.ReadingYear</td>
+                    <td>@item.ElectricReading</td>
+                    <td>@item.WaterReading</td>
+                    <td>@item.ReadingDate.ToString("dd/MM/yyyy")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <nav>
+        <ul class="pagination">
+            @for (int p = 1; p <= Model.TotalPages; p++)
+            {
+                <li class="page-item @(p == Model.PageIndex ? "active" : "")">
+                    <a class="page-link"
+                       asp-page="/MeterReading/History"
+                       asp-route-month="@Model.SelectedMonth"
+                       asp-route-year="@Model.SelectedYear"
+                       asp-route-pageIndex="@p">
+                        @p
+                    </a>
+                </li>
+            }
+        </ul>
+    </nav>
+</div>

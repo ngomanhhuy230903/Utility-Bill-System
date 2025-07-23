@@ -1,4 +1,4 @@
-﻿@page
+﻿@page 
 @model IndexModel
 @{
     ViewData["Title"] = "Home";
@@ -9,7 +9,7 @@
         <div class="col-md-10">
             <div class="text-center mb-5">
                 <h1 class="display-4">
-                    <i class="bi bi-house-fill text-primary"></i> 
+                    <i class="bi bi-house-fill text-primary"></i>
                     Utility Bill Management System
                 </h1>
                 <p class="lead">Welcome to the comprehensive utility bill management solution for residential complexes.</p>
@@ -21,7 +21,7 @@
                         <div class="card-body text-center">
                             <i class="bi bi-door-open-fill text-primary" style="font-size: 3rem;"></i>
                             <h5 class="card-title mt-3">Room Management</h5>
-                            <p class="card-text">Manage rooms, assign tenants, and track occupancy status.</p>
+                            <p class="card-text">Manage rooms, assign tenant, and track occupancy status.</p>
                             <a href="/Rooms" class="btn btn-primary">
                                 <i class="bi bi-arrow-right"></i> Manage Rooms
                             </a>
@@ -33,7 +33,7 @@
                     <div class="card h-100 shadow-sm">
                         <div class="card-body text-center">
                             <i class="bi bi-receipt-cutoff text-success" style="font-size: 3rem;"></i>
-                            <h5 class="card-title mt-3">Billing & Invoices</h5>
+                            <h5 class="card-title mt-3">Billing &amp; Invoices</h5>
                             <p class="card-text">Generate invoices, track payments, and manage billing cycles.</p>
                             <a href="/Billing" class="btn btn-success">
                                 <i class="bi bi-arrow-right"></i> View Billing
@@ -50,6 +50,34 @@
                             <p class="card-text">Schedule maintenance, track repairs, and manage facility upkeep.</p>
                             <a href="/Maintenance" class="btn btn-warning">
                                 <i class="bi bi-arrow-right"></i> Maintenance
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Meter Reading Section -->
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="bi bi-speedometer2 text-info" style="font-size: 3rem;"></i>
+                            <h5 class="card-title mt-3">Meter Reading</h5>
+                            <p class="card-text">Record and view current meter readings for utilities.</p>
+                            <a href="/MeterReading/MeterRead" class="btn btn-info">
+                                <i class="bi bi-arrow-right"></i> Meter Read
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Section -->
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="bi bi-clock-history text-secondary" style="font-size: 3rem;"></i>
+                            <h5 class="card-title mt-3">History</h5>
+                            <p class="card-text">View historical meter reading and billing data.</p>
+                            <a href="/MeterReading/History" class="btn btn-secondary">
+                                <i class="bi bi-arrow-right"></i> View History
                             </a>
                         </div>
                     </div>
@@ -125,7 +153,7 @@
                             <ol class="mb-0">
                                 <li>Click "Login" to access your account</li>
                                 <li>Navigate to "Room Management" to set up your rooms</li>
-                                <li>Use "Billing & Invoices" to generate monthly bills</li>
+                                <li>Use "Billing &amp; Invoices" to generate monthly bills</li>
                                 <li>Test notifications to stay updated with system alerts</li>
                             </ol>
                         }
@@ -134,7 +162,7 @@
                             <p class="mb-2">Welcome back! Here's what you can do:</p>
                             <ol class="mb-0">
                                 <li>Manage your rooms and tenants in "Room Management"</li>
-                                <li>Generate and view bills in "Billing & Invoices"</li>
+                                <li>Generate and view bills in "Billing &amp; Invoices"</li>
                                 <li>Schedule maintenance tasks in "Maintenance"</li>
                                 <li>Check your cart for pending payments</li>
                                 <li>View reports and analytics</li>
