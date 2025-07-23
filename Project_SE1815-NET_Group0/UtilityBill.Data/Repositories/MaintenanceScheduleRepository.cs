@@ -38,7 +38,8 @@ namespace UtilityBill.Data.Repositories
         public string? Description { get; set; }
         public DateTime ScheduledStart { get; set; }
         public DateTime ScheduledEnd { get; set; }
-        public string CreatedByUserId { get; set; } = null!;
+        public string? Status { get; set; }
+        public string? CreatedByUserId { get; set; }
     }
 
     public class CalendarEventDTO

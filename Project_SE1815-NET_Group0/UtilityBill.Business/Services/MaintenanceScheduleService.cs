@@ -62,5 +62,11 @@ namespace UtilityBill.Business.Services
 
             return result;
         }
+
+        public async Task<MaintenanceSchedule> GetById(int id)
+        {
+            return await _maintenanceScheduleRepository.GetByIdAsync(id)
+                   ?? throw new KeyNotFoundException($"Maintenance schedule with ID {id} not found.");
+        }
     }
 }
