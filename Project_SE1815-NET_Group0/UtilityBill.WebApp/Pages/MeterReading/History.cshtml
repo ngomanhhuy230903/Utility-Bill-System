@@ -1,22 +1,22 @@
 ﻿@page "/MeterReading/History"
 @model UtilityBill.WebApp.Pages.MeterReading.HistoryModel
 
-@{
+<!-- @{
     // DEBUG: What did the browser actually send?
-    var qs = HttpContext.Request.QueryString.Value;
+   var qs = HttpContext.Request.QueryString.Value;
     var pg = HttpContext.Request.Query["pageIndex"].ToString();
-}
+    }-->
 
 <div class="container mt-4">
 
     <h2 class="mb-4">Lịch sử chỉ số</h2>
 
     <!-- Debugging block -->
-    <pre>
+  <!--  <pre>
 QueryString: @qs
 pageIndex:    @pg
 CurrentPage:  @Model.PageIndex
-  </pre>
+      </pre>-->
 
     <form method="get" class="row g-3 mb-4">
         <div class="col-auto">
@@ -54,7 +54,7 @@ CurrentPage:  @Model.PageIndex
                     <td>@item.ReadingMonth/@item.ReadingYear</td>
                     <td>@item.ElectricReading</td>
                     <td>@item.WaterReading</td>
-                    <td>@item.ReadingDate:dd/MM/yyyy</td>
+                    <td>@item.ReadingDate.ToString("dd/MM/yyyy")</td>
                 </tr>
             }
         </tbody>

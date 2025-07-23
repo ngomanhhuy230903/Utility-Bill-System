@@ -12,7 +12,7 @@ namespace UtilityBill.Business.DTOs
         [Name("RoomNumber")]
         public string RoomNumber { get; set; } = null!;
 
-        [Name("ElectricityReading")]
+        [Name("ElectricReading")]
         public decimal ElectricReading { get; set; }
 
         [Name("WaterReading")]
