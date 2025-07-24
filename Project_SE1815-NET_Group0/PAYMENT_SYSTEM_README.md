@@ -193,7 +193,7 @@ const paymentRequest = {
     amount: totalAmount,
     orderDescription: 'Utility bill payment',
     name: userName,
-    orderType: 'utility_bill'
+    orderType: 'invoice_payment'
 };
 ```
 

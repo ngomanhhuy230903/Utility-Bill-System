@@ -179,8 +179,8 @@
                     orderId: '@Model.Invoice?.Id.ToString()',
                     amount: @Model.Invoice?.TotalAmount ?? 0,
                     orderDescription: 'Utility bill payment for Room @Model.Invoice?.Room?.RoomNumber',
-                    name: '@User.Identity?.Name ?? "Guest"',
-                    orderType: 'utility_bill'
+                    name: '@(User.Identity?.IsAuthenticated == true ? User.Identity.Name : "Guest")',
+                    orderType: 'Invoice Payment'
                 };
                 
                 // Get the API base URL from meta tag
