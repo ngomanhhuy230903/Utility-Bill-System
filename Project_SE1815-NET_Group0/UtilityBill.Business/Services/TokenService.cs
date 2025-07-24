@@ -58,7 +58,7 @@ namespace UtilityBill.Business.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(15),
+                Expires = DateTime.UtcNow.AddHours(24),
                 SigningCredentials = new SigningCredentials(_key, SecurityAlgorithms.HmacSha512Signature),
                 Issuer = _issuer,
                 Audience = _audience

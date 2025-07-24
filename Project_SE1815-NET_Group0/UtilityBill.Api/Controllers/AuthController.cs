@@ -1,100 +1,120 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Memory;
 using UtilityBill.Api.DTOs;
 using UtilityBill.Business.DTOs;
 using UtilityBill.Business.Interfaces;
 using UtilityBill.Data.Models;
 using UtilityBill.Data.Repositories;
-using System.IdentityModel.Tokens.Jwt;
+
 namespace UtilityBill.Api.Controllers
 {
     public class AuthController : BaseApiController
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IAuthService _authService;
+        private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IEmailService _emailService;
+        private readonly IMemoryCache _memoryCache;
         private readonly ITokenService _tokenService;
 
+        // Constructor đã được dọn dẹp và thống nhất
         public AuthController(
             IUnitOfWork unitOfWork,
-            IAuthService authService,
+            IPasswordHasher<User> passwordHasher,
             IEmailService emailService,
+            IMemoryCache memoryCache,
             ITokenService tokenService)
         {
             _unitOfWork = unitOfWork;
-            _authService = authService;
+            _passwordHasher = passwordHasher;
             _emailService = emailService;
+            _memoryCache = memoryCache;
             _tokenService = tokenService;
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
+        public async Task<ActionResult<UserDto>> Register([FromBody] RegisterDto registerDto)
         {
-            var user = await _authService.RegisterAsync(registerDto);
-            if (user == null)
+            var existingUser = await _unitOfWork.UserRepository.FirstOrDefaultAsync(u => u.UserName.ToLower() == registerDto.UserName.ToLower());
+            if (existingUser != null)
             {
                 return BadRequest("Tên đăng nhập đã được sử dụng.");
             }
-
+            var user = new User
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserName = registerDto.UserName,
+                Email = registerDto.Email,
+                FullName = registerDto.FullName,
+                PhoneNumber = registerDto.PhoneNumber,
+                PasswordHash = _passwordHasher.HashPassword(null, registerDto.Password),
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true
+            };
+            await _unitOfWork.UserRepository.AddAsync(user);
+            await _unitOfWork.SaveChangesAsync();
             var token = await _tokenService.CreateToken(user);
-            return new UserDto { Id = user.Id, UserName = user.UserName, Email = user.Email, FullName = user.FullName, Token = token };
+            return new UserDto { UserName = user.UserName, Email = user.Email, FullName = user.FullName, Token = token };
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
+        public async Task<ActionResult<UserDto>> Login([FromBody] LoginDto loginDto)
         {
-            var user = await _authService.LoginAsync(loginDto);
-            if (user == null)
+            var user = await _unitOfWork.UserRepository.FirstOrDefaultAsync(u => u.UserName.ToLower() == loginDto.UserName.ToLower());
+            if (user == null || _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, loginDto.Password) == PasswordVerificationResult.Failed)
             {
                 return Unauthorized("Sai tên đăng nhập hoặc mật khẩu.");
             }
-
             var token = await _tokenService.CreateToken(user);
-            return new UserDto { Id = user.Id, UserName = user.UserName, Email = user.Email, FullName = user.FullName, Token = token };
+            return new UserDto { UserName = user.UserName, Email = user.Email, FullName = user.FullName, Token = token };
         }
 
-        [HttpPost("forgot-password")]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
+        [HttpPost("send-reset-otp")]
+        public async Task<IActionResult> SendResetOtp([FromBody] ForgotPasswordDto forgotPasswordDto)
         {
-            // Tìm user bằng email, không dùng NormalizedEmail.
             var user = await _unitOfWork.UserRepository.FirstOrDefaultAsync(u => u.Email.ToLower() == forgotPasswordDto.Email.ToLower());
-
             if (user != null)
             {
-                var token = _tokenService.GeneratePasswordResetToken(user);
-                // Sửa lại cổng 7xxx cho đúng với WebApp của bạn
-                var resetLink = $"https://localhost:7240/Account/ResetPassword?token={token}";
-                await _emailService.SendPasswordResetEmailAsync(user.Email, resetLink);
+                var otp = new Random().Next(100000, 999999).ToString();
+                var cacheEntry = new { Otp = otp, UserId = user.Id, Attempts = 0 };
+                _memoryCache.Set(user.Email, cacheEntry, TimeSpan.FromMinutes(10));
+                await _emailService.SendOtpEmailAsync(user.Email, otp);
             }
-
-            // Luôn trả về thông báo này để bảo mật
-            return Ok(new { message = "Nếu email của bạn tồn tại trong hệ thống, chúng tôi đã gửi một link reset mật khẩu." });
+            return Ok(new { message = "Nếu email tồn tại, một mã OTP đã được gửi." });
         }
 
-        [HttpPost("reset-password")]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
+        [HttpPost("reset-password-with-otp")]
+        public async Task<IActionResult> ResetPasswordWithOtp([FromBody] ResetPasswordWithOtpDto dto)
         {
-            var principal = _tokenService.ValidatePasswordResetToken(resetPasswordDto.Token);
-            if (principal == null)
+            if (!_memoryCache.TryGetValue(dto.Email, out dynamic cacheEntry))
             {
-                return BadRequest(new { message = "Token không hợp lệ hoặc đã hết hạn." });
+                return BadRequest(new { message = "Mã OTP không hợp lệ hoặc đã hết hạn." });
+            }
+            if (cacheEntry.Attempts >= 5)
+            {
+                return BadRequest(new { message = "Bạn đã nhập sai quá nhiều lần. Vui lòng yêu cầu mã OTP mới." });
+            }
+            if (cacheEntry.Otp != dto.Otp)
+            {
+                var newEntry = new { Otp = cacheEntry.Otp, UserId = cacheEntry.UserId, Attempts = cacheEntry.Attempts + 1 };
+                _memoryCache.Set(dto.Email, newEntry, TimeSpan.FromMinutes(10));
+                return BadRequest(new { message = $"Mã OTP không chính xác. Bạn còn {5 - newEntry.Attempts} lần thử." });
             }
 
-            var userId = principal.FindFirstValue(JwtRegisteredClaimNames.NameId);
-            var user = await _unitOfWork.UserRepository.GetUserByIdAsync(userId);
+            var user = await _unitOfWork.UserRepository.GetUserByIdAsync(cacheEntry.UserId);
             if (user == null)
             {
-                return BadRequest(new { message = "Người dùng không tồn tại." });
+                return NotFound("Không tìm thấy người dùng.");
             }
 
-            // Use BCrypt to hash the new password
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(resetPasswordDto.Password);
+            user.PasswordHash = _passwordHasher.HashPassword(user, dto.NewPassword);
             _unitOfWork.UserRepository.Update(user);
+
+            // Dòng này bây giờ sẽ hoạt động đúng nhờ việc sửa GenericRepository
             await _unitOfWork.SaveChangesAsync();
 
-            return Ok(new { message = "Mật khẩu của bạn đã được thay đổi thành công." });
+            _memoryCache.Remove(dto.Email);
+            return Ok(new { message = "Mật khẩu đã được thay đổi thành công." });
         }
     }
 }

@@ -40,5 +40,28 @@ namespace UtilityBill.Business.Services
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
         }
+        // Thêm phương thức này vào SmtpEmailService.cs
+        public async Task SendOtpEmailAsync(string toEmail, string otp)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_smtpSettings.SenderName, _smtpSettings.SenderEmail));
+            message.To.Add(new MailboxAddress(toEmail, toEmail));
+            message.Subject = "Mã OTP Reset Mật khẩu";
+
+            var bodyBuilder = new BodyBuilder();
+            bodyBuilder.HtmlBody = $"""
+        <h2>Yêu cầu Reset Mật khẩu</h2>
+        <p>Mã OTP để đặt lại mật khẩu của bạn là:</p>
+        <h3 style="color: #0d6efd; letter-spacing: 2px;">{otp}</h3>
+        <p>Mã này chỉ có hiệu lực trong 10 phút. Vui lòng không chia sẻ mã này với bất kỳ ai.</p>
+        """;
+            message.Body = bodyBuilder.ToMessageBody();
+
+            using var client = new SmtpClient();
+            await client.ConnectAsync(_smtpSettings.Server, _smtpSettings.Port, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(_smtpSettings.Username, _smtpSettings.Password);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+        }
     }
 }

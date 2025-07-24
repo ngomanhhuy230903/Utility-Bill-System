@@ -29,7 +29,28 @@ namespace UtilityBill.WebApp.Services
             }
             return client;
         }
+        // Thêm 2 phương thức này vào trong class ApiClient
 
+        public async Task<bool> SendResetOtpAsync(ForgotPasswordDto dto)
+        {
+            var client = _httpClientFactory.CreateClient("ApiClient");
+            var response = await client.PostAsJsonAsync("auth/send-reset-otp", dto);
+            return response.IsSuccessStatusCode;
+        }
+
+        public async Task<(bool Success, string ErrorMessage)> ResetPasswordWithOtpAsync(ResetPasswordWithOtpDto dto)
+        {
+            var client = _httpClientFactory.CreateClient("ApiClient");
+            var response = await client.PostAsJsonAsync("auth/reset-password-with-otp", dto);
+            if (response.IsSuccessStatusCode)
+            {
+                return (true, null);
+            }
+
+            // Đọc thông báo lỗi từ API
+            var errorResponse = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+            return (false, errorResponse?["message"] ?? "Đã có lỗi xảy ra.");
+        }
         public async Task<List<RoomDto>> GetRoomsAsync()
         {
             var client = GetAuthenticatedClient();

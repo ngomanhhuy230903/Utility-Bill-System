@@ -17,13 +17,12 @@ namespace UtilityBill.WebApp.Pages.Account
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
+            if (!ModelState.IsValid) return Page();
 
-            await _apiClient.ForgotPasswordAsync(Input);
-            return RedirectToPage("./ForgotPasswordConfirmation");
+            await _apiClient.SendResetOtpAsync(Input); // Gọi API gửi OTP
+
+            // Chuyển hướng đến trang nhập OTP, gửi kèm email
+            return RedirectToPage("./ResetPassword", new { email = Input.Email });
         }
     }
 }

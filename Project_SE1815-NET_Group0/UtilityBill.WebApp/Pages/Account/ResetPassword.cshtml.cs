@@ -10,33 +10,28 @@ namespace UtilityBill.WebApp.Pages.Account
         private readonly IApiClient _apiClient;
         public ResetPasswordModel(IApiClient apiClient) { _apiClient = apiClient; }
 
-        [BindProperty]
-        public ResetPasswordDto Input { get; set; }
+        [BindProperty(SupportsGet = true)]
+        public string Email { get; set; } // Nhận email từ trang trước
 
-        public IActionResult OnGet(string email = null, string token = null)
+        [BindProperty]
+        public ResetPasswordWithOtpDto Input { get; set; }
+
+        public void OnGet()
         {
-            if (email == null || token == null)
-            {
-                return BadRequest("Link reset mật khẩu không hợp lệ hoặc đã hết hạn.");
-            }
-            Input = new ResetPasswordDto { Email = email, Token = token };
-            return Page();
+            // Gán email vào Input để gửi đi khi POST
+            Input = new ResetPasswordWithOtpDto { Email = this.Email };
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
+            if (!ModelState.IsValid) return Page();
 
-            var success = await _apiClient.ResetPasswordAsync(Input);
+            var (success, errorMessage) = await _apiClient.ResetPasswordWithOtpAsync(Input);
             if (success)
             {
                 return RedirectToPage("./ResetPasswordConfirmation");
             }
-
-            ModelState.AddModelError(string.Empty, "Không thể reset mật khẩu. Token có thể đã hết hạn hoặc không hợp lệ.");
+            ModelState.AddModelError(string.Empty, errorMessage);
             return Page();
         }
     }

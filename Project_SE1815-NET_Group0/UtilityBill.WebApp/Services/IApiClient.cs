@@ -21,5 +21,9 @@ namespace UtilityBill.WebApp.Services
         Task<List<TenantHistoryDto>> GetRoomHistoryAsync(int roomId);
         Task<bool> ForgotPasswordAsync(ForgotPasswordDto dto);
         Task<bool> ResetPasswordAsync(ResetPasswordDto dto);
+        // --- CÁC PHƯƠNG THỨC MỚI CHO OTP ---
+        Task<bool> SendResetOtpAsync(ForgotPasswordDto dto);
+        Task<(bool Success, string ErrorMessage)> ResetPasswordWithOtpAsync(ResetPasswordWithOtpDto dto);
+
     }
 }

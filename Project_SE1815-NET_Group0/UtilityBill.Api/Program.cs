@@ -55,7 +55,7 @@ builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
 
 // Đăng ký background job
 builder.Services.AddHostedService<MonthlyBillingJob>();
-
+builder.Services.AddMemoryCache();
 // Cấu hình xác thực JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
