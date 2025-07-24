@@ -1,13 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
+using UtilityBill.Api.DTOs;
 using UtilityBill.Api.Services.Momo;
 using UtilityBill.Api.Services.VnPay;
+using UtilityBill.Business.Interfaces;
+using UtilityBill.Data.Context;
+using UtilityBill.Data.DTOs;
+using UtilityBill.Data.Enums;
 using UtilityBill.Data.Models;
 using UtilityBill.Data.Models.VnPay;
-using UtilityBill.Data.Enums;
-using UtilityBill.Api.DTOs;
-using UtilityBill.Business.Interfaces;
-using UtilityBill.Data.DTOs;
-using System.Text.Json;
 
 namespace UtilityBill.Api.Controllers;
 
@@ -15,14 +16,14 @@ namespace UtilityBill.Api.Controllers;
 [Route("api/[controller]")]
 public class PaymentController : Controller
 {
-    private IMomoService _momoService;
-    private readonly IVnPayService _vnPayService;
-    private readonly IPushNotificationService _pushNotificationService;
     private readonly ILogger<PaymentController> _logger;
+    private readonly IPushNotificationService _pushNotificationService;
+    private readonly IVnPayService _vnPayService;
+    private readonly IMomoService _momoService;
 
     public PaymentController(
-        IMomoService momoService, 
-        IVnPayService vnPayService, 
+        IMomoService momoService,
+        IVnPayService vnPayService,
         IPushNotificationService pushNotificationService,
         ILogger<PaymentController> logger)
     {
@@ -38,19 +39,13 @@ public class PaymentController : Controller
         try
         {
             var url = _vnPayService.CreatePaymentUrl(model, HttpContext);
-            
+
             // Check if the URL is valid
-            if (string.IsNullOrEmpty(url))
-            {
-                return BadRequest("VnPay service returned null or empty URL");
-            }
-            
+            if (string.IsNullOrEmpty(url)) return BadRequest("VnPay service returned null or empty URL");
+
             // Check if the URL looks like a valid VnPay URL
-            if (!url.Contains("vnpayment.vn"))
-            {
-                return BadRequest($"Invalid VnPay URL generated: {url}");
-            }
-            
+            if (!url.Contains("vnpayment.vn")) return BadRequest($"Invalid VnPay URL generated: {url}");
+
             // Return JSON response with the redirect URL instead of redirecting directly
             return Json(new { redirectUrl = url });
         }
@@ -59,6 +54,7 @@ public class PaymentController : Controller
             return BadRequest($"VnPay payment error: {ex.Message}");
         }
     }
+
     [HttpGet("PaymentCallbackVnpay")]
     public async Task<IActionResult> PaymentCallbackVnpay()
     {
@@ -66,13 +62,13 @@ public class PaymentController : Controller
 
         // Send notification for successful VnPay payment
         if (response.Success)
-        {
             try
             {
                 var notification = new PushNotificationDto
                 {
                     Title = "Payment Successful!",
-                    Body = $"Your VnPay payment of {response.OrderDescription} has been completed successfully. Transaction ID: {response.TransactionId}",
+                    Body =
+                        $"Your VnPay payment of {response.OrderDescription} has been completed successfully. Transaction ID: {response.TransactionId}",
                     Tag = "payment-success",
                     Data = JsonSerializer.Serialize(new
                     {
@@ -84,13 +80,15 @@ public class PaymentController : Controller
                 };
 
                 await _pushNotificationService.SendNotificationAsync(notification);
-                _logger.LogInformation("Payment success notification sent for VnPay transaction {TransactionId}", response.TransactionId);
+                _logger.LogInformation("Payment success notification sent for VnPay transaction {TransactionId}",
+                    response.TransactionId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send payment success notification for VnPay transaction {TransactionId}", response.TransactionId);
+                _logger.LogError(ex,
+                    "Failed to send payment success notification for VnPay transaction {TransactionId}",
+                    response.TransactionId);
             }
-        }
 
         return Json(response);
     }
@@ -102,7 +100,6 @@ public class PaymentController : Controller
 
         // Send notification for successful MoMo payment
         if (response != null && !string.IsNullOrEmpty(response.OrderId))
-        {
             try
             {
                 var notification = new PushNotificationDto
@@ -124,32 +121,31 @@ public class PaymentController : Controller
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send payment success notification for MoMo order {OrderId}", response.OrderId);
+                _logger.LogError(ex, "Failed to send payment success notification for MoMo order {OrderId}",
+                    response.OrderId);
             }
-        }
 
         return Json(response);
     }
+
     [HttpPost("CreatePaymentMomo")]
     public async Task<IActionResult> CreatePaymentMomo(OrderInfo model)
     {
         try
         {
             var response = await _momoService.CreatePaymentMomo(model);
-            
+
             // Check if the response and PayUrl are valid
-            if (response == null)
-            {
-                return BadRequest("MoMo service returned null response");
-            }
-            
+            if (response == null) return BadRequest("MoMo service returned null response");
+
             if (string.IsNullOrEmpty(response.PayUrl))
             {
                 // Log the error details
-                var errorMessage = $"MoMo payment failed. ErrorCode: {response.ErrorCode}, Message: {response.Message}, LocalMessage: {response.LocalMessage}";
+                var errorMessage =
+                    $"MoMo payment failed. ErrorCode: {response.ErrorCode}, Message: {response.Message}, LocalMessage: {response.LocalMessage}";
                 return BadRequest(errorMessage);
             }
-            
+
             return Redirect(response.PayUrl);
         }
         catch (Exception ex)
@@ -158,41 +154,93 @@ public class PaymentController : Controller
         }
     }
 
-    [HttpPost("/api/payments/create")]
-    public async Task<IActionResult> CreateUnifiedPayment([FromBody] UnifiedPaymentRequest request, [FromQuery] PaymentMethod paymentMethod)
+
+    [HttpPost("create")]
+    public async Task<IActionResult> CreateUnifiedPayment([FromBody] UnifiedPaymentRequest request,
+        [FromQuery] PaymentMethod paymentMethod)
     {
-        object paymentResponse = null;
-        bool isSuccess = false;
-        string message = string.Empty;
-
-        // Get db context (assume injected via DI, otherwise adjust as needed)
-        var dbContext = HttpContext.RequestServices.GetService(typeof(UtilityBill.Data.Context.UtilityBillDbContext)) as UtilityBill.Data.Context.UtilityBillDbContext;
-        if (dbContext == null)
-            return StatusCode(500, "Database context not available");
-
-        switch (paymentMethod)
+        try
         {
-            case PaymentMethod.VNPAY:
+            _logger.LogInformation(
+                "CreateUnifiedPayment called with paymentMethod: {PaymentMethod}, OrderId: {OrderId}", paymentMethod,
+                request?.OrderId);
+
+            object paymentResponse = null;
+            var isSuccess = false;
+            var message = string.Empty;
+
+            // Validate request
+            if (request == null)
             {
-                var vnpayModel = request.ToPaymentInformationModel();
-                var url = _vnPayService.CreatePaymentUrl(vnpayModel, HttpContext);
-                paymentResponse = new { redirectUrl = url };
-                isSuccess = !string.IsNullOrEmpty(url) && url.Contains("vnpayment.vn");
-                message = isSuccess ? "VnPay payment URL generated successfully." : "Failed to generate VnPay payment URL.";
-                break;
+                _logger.LogError("Request is null");
+                return BadRequest(new { message = "Request data is required" });
             }
-            case PaymentMethod.MOMO:
+
+            // Get db context (assume injected via DI, otherwise adjust as needed)
+            var dbContext =
+                HttpContext.RequestServices.GetService(typeof(UtilityBillDbContext)) as UtilityBillDbContext;
+            if (dbContext == null)
             {
-                var momoModel = request.ToOrderInfo();
-                var response = await _momoService.CreatePaymentMomo(momoModel);
-                paymentResponse = response;
-                isSuccess = response != null && !string.IsNullOrEmpty(response.PayUrl);
-                message = isSuccess ? "MoMo payment URL generated successfully." : "Failed to generate MoMo payment URL.";
-                break;
+                _logger.LogError("Database context not available");
+                return StatusCode(500, new { message = "Database context not available" });
             }
-            case PaymentMethod.CASH:
+
+            switch (paymentMethod)
             {
-                // Create and save payment with Unpaid status
+                case PaymentMethod.VNPAY:
+                {
+                    var vnpayModel = request.ToPaymentInformationModel();
+                    var url = _vnPayService.CreatePaymentUrl(vnpayModel, HttpContext);
+                    paymentResponse = new { redirectUrl = url };
+                    isSuccess = !string.IsNullOrEmpty(url) && url.Contains("vnpayment.vn");
+                    message = isSuccess
+                        ? "VnPay payment URL generated successfully."
+                        : "Failed to generate VnPay payment URL.";
+                    break;
+                }
+                case PaymentMethod.MOMO:
+                {
+                    var momoModel = request.ToOrderInfo();
+                    var response = await _momoService.CreatePaymentMomo(momoModel);
+                    paymentResponse = response;
+                    isSuccess = response != null && !string.IsNullOrEmpty(response.PayUrl);
+                    message = isSuccess
+                        ? "MoMo payment URL generated successfully."
+                        : "Failed to generate MoMo payment URL.";
+                    break;
+                }
+                case PaymentMethod.CASH:
+                {
+                    // Create and save payment with Unpaid status
+                    var payment = new Payment
+                    {
+                        Id = Guid.NewGuid(),
+                        InvoiceId = Guid.TryParse(request.OrderId, out var invoiceId) ? invoiceId : Guid.Empty,
+                        PaymentDate = DateTime.UtcNow,
+                        Amount = (decimal)request.Amount,
+                        PaymentMethod = paymentMethod,
+                        Status = "Unpaid"
+                    };
+                    dbContext.Payments.Add(payment);
+                    await dbContext.SaveChangesAsync();
+                    paymentResponse = payment;
+                    isSuccess = true;
+                    message = "Cash payment recorded successfully.";
+                    break;
+                }
+                case PaymentMethod.STRIPE:
+                {
+                    throw new NotImplementedException("Stripe payment is not implemented yet.");
+                }
+                // Add more payment methods here as needed
+                default:
+                    return BadRequest("Unsupported payment method.");
+            }
+
+            if (isSuccess && paymentMethod != PaymentMethod.CASH)
+            {
+                // For online payments (VnPay, MoMo), create a pending payment record
+                // The actual payment record will be created when the payment callback is received
                 var payment = new Payment
                 {
                     Id = Guid.NewGuid(),
@@ -200,38 +248,11 @@ public class PaymentController : Controller
                     PaymentDate = DateTime.UtcNow,
                     Amount = (decimal)request.Amount,
                     PaymentMethod = paymentMethod,
-                    Status = "Unpaid"
+                    Status = "Pending"
                 };
                 dbContext.Payments.Add(payment);
                 await dbContext.SaveChangesAsync();
-                paymentResponse = payment;
-                isSuccess = true;
-                message = "Cash payment recorded as Unpaid.";
-                break;
             }
-            case PaymentMethod.STRIPE:
-            {
-                throw new NotImplementedException("Stripe payment is not implemented yet.");
-            }
-            // Add more payment methods here as needed
-            default:
-                return BadRequest("Unsupported payment method.");
-        }
-
-        if (isSuccess)
-        {
-            // Map UnifiedPaymentRequest to Payment entity
-            var payment = new Payment
-            {
-                Id = Guid.NewGuid(),
-                InvoiceId = Guid.TryParse(request.OrderId, out var invoiceId) ? invoiceId : Guid.Empty,
-                PaymentDate = DateTime.UtcNow,
-                Amount = (decimal)request.Amount,
-                PaymentMethod = paymentMethod,
-                Status = "Success"
-            };
-            dbContext.Payments.Add(payment);
-            await dbContext.SaveChangesAsync();
 
             // Send appropriate notifications based on payment method
             try
@@ -242,7 +263,8 @@ public class PaymentController : Controller
                     var warningNotification = new PushNotificationDto
                     {
                         Title = "Cash Payment Warning",
-                        Body = $"Cash payment of {request.Amount:N0} VND has been recorded as 'Unpaid'. Please complete the payment in person.",
+                        Body =
+                            $"Cash payment of {request.Amount:N0} VND has been recorded as 'Unpaid'. Please complete the payment in person.",
                         Tag = "cash-payment-warning",
                         Data = JsonSerializer.Serialize(new
                         {
@@ -254,7 +276,8 @@ public class PaymentController : Controller
                     };
 
                     await _pushNotificationService.SendNotificationAsync(warningNotification);
-                    _logger.LogInformation("Cash payment warning notification sent for order {OrderId}", request.OrderId);
+                    _logger.LogInformation("Cash payment warning notification sent for order {OrderId}",
+                        request.OrderId);
                 }
                 else
                 {
@@ -262,7 +285,8 @@ public class PaymentController : Controller
                     var successNotification = new PushNotificationDto
                     {
                         Title = "Payment Successful!",
-                        Body = $"Your {paymentMethod} payment of {request.Amount:N0} VND has been processed successfully.",
+                        Body =
+                            $"Your {paymentMethod} payment of {request.Amount:N0} VND has been processed successfully.",
                         Tag = "payment-success",
                         Data = JsonSerializer.Serialize(new
                         {
@@ -274,16 +298,25 @@ public class PaymentController : Controller
                     };
 
                     await _pushNotificationService.SendNotificationAsync(successNotification);
-                    _logger.LogInformation("Payment success notification sent for {PaymentMethod} order {OrderId}", paymentMethod, request.OrderId);
+                    _logger.LogInformation("Payment success notification sent for {PaymentMethod} order {OrderId}",
+                        paymentMethod, request.OrderId);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send payment notification for {PaymentMethod} order {OrderId}", paymentMethod, request.OrderId);
+                _logger.LogError(ex, "Failed to send payment notification for {PaymentMethod} order {OrderId}",
+                    paymentMethod, request.OrderId);
             }
+
+            return Ok(new { message, paymentResponse });
         }
 
-        return Ok(new { message, paymentResponse });
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in CreateUnifiedPayment for paymentMethod: {PaymentMethod}, OrderId: {OrderId}",
+                paymentMethod, request?.OrderId);
+            return StatusCode(500, new { message = "An error occurred while processing the payment: " + ex.Message });
+        }
     }
 
     [HttpPost("mark-payment-successful")]
@@ -291,7 +324,8 @@ public class PaymentController : Controller
     {
         try
         {
-            var dbContext = HttpContext.RequestServices.GetService(typeof(UtilityBill.Data.Context.UtilityBillDbContext)) as UtilityBill.Data.Context.UtilityBillDbContext;
+            var dbContext =
+                HttpContext.RequestServices.GetService(typeof(UtilityBillDbContext)) as UtilityBillDbContext;
             if (dbContext == null)
                 return StatusCode(500, "Database context not available");
 
@@ -309,7 +343,8 @@ public class PaymentController : Controller
                 var notification = new PushNotificationDto
                 {
                     Title = "Payment Confirmed!",
-                    Body = $"Your {payment.PaymentMethod} payment of {payment.Amount:N0} VND has been confirmed and processed successfully.",
+                    Body =
+                        $"Your {payment.PaymentMethod} payment of {payment.Amount:N0} VND has been confirmed and processed successfully.",
                     Tag = "payment-confirmed",
                     Data = JsonSerializer.Serialize(new
                     {
@@ -326,7 +361,8 @@ public class PaymentController : Controller
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send payment confirmation notification for payment {PaymentId}", payment.Id);
+                _logger.LogError(ex, "Failed to send payment confirmation notification for payment {PaymentId}",
+                    payment.Id);
             }
 
             return Ok(new { message = "Payment marked as successful", payment });

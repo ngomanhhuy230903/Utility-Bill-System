@@ -4,8 +4,10 @@
     ViewData["Title"] = "Pay Invoice";
 }
 
-@* Add anti-forgery token for AJAX requests *@
-@Html.AntiForgeryToken()
+@* Add JWT token meta tag for API calls *@
+<meta name="jwt-token" content="@User.FindFirstValue("JWToken")" />
+@* Add API base URL meta tag for API calls *@
+<meta name="api-base-url" content="@Model.ApiBaseUrl" />
 
 <div class="container mt-4">
     @if (Model.Invoice == null)
@@ -128,6 +130,8 @@
                                     Cash payments will be marked as "Unpaid" and require manual confirmation.
                                 </small>
                             </div>
+
+
                         }
 
                         <hr>
@@ -163,33 +167,51 @@
             }
         }
 
+
+
         async function createUnifiedPayment(paymentMethod) {
             try {
-                const formData = new FormData();
-                formData.append('paymentMethod', paymentMethod);
+                // Get the JWT token from the cookie
+                const token = document.querySelector('meta[name="jwt-token"]')?.getAttribute('content');
+                
+                // Prepare the payment request
+                const paymentRequest = {
+                    orderId: '@Model.Invoice?.Id.ToString()',
+                    amount: @Model.Invoice?.TotalAmount ?? 0,
+                    orderDescription: 'Utility bill payment for Room @Model.Invoice?.Room?.RoomNumber',
+                    name: '@User.Identity?.Name ?? "Guest"',
+                    orderType: 'utility_bill'
+                };
+                
+                // Get the API base URL from meta tag
+                const apiBaseUrl = document.querySelector('meta[name="api-base-url"]')?.getAttribute('content');
 
-                const response = await fetch('?handler=Payment', {
+                // Call the API controller directly
+                const apiUrl = apiBaseUrl + '/payment/create?paymentMethod=' + paymentMethod;
+                
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        'Content-Type': 'application/json',
+                        'Authorization': token ? 'Bearer ' + token : ''
                     },
-                    body: formData
+                    body: JSON.stringify(paymentRequest)
                 });
-
+                
                 if (response.ok) {
                     const result = await response.json();
                     
-                    if (result.success) {
+                    if (result.message && result.message.includes('successfully')) {
                         if (paymentMethod === 'CASH') {
                             alert('Cash payment recorded successfully! Please complete the payment in person.');
                             window.location.href = '/Billing';
-                        } else if (result.data && result.data.paymentResponse) {
-                            if (result.data.paymentResponse.redirectUrl) {
-                                // Redirect to payment gateway
-                                window.location.href = result.data.paymentResponse.redirectUrl;
-                            } else if (result.data.paymentResponse.payUrl) {
+                        } else if (result.paymentResponse) {
+                            if (result.paymentResponse.redirectUrl) {
+                                // Redirect to VnPay payment gateway
+                                window.location.href = result.paymentResponse.redirectUrl;
+                            } else if (result.paymentResponse.payUrl) {
                                 // MoMo payment URL
-                                window.location.href = result.data.paymentResponse.payUrl;
+                                window.location.href = result.paymentResponse.payUrl;
                             } else {
                                 alert('Payment initiated successfully!');
                             }
@@ -200,10 +222,10 @@
                         alert(`Payment failed: ${result.message}`);
                     }
                 } else {
-                    alert('An error occurred while processing the payment. Please try again.');
+                    const errorResult = await response.json();
+                    alert(`Payment failed: ${errorResult.message || 'An error occurred while processing the payment.'}`);
                 }
             } catch (error) {
-                console.error('Payment error:', error);
                 alert('An error occurred while processing the payment. Please try again.');
             }
         }
