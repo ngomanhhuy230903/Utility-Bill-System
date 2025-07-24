@@ -10,7 +10,7 @@ namespace UtilityBill.WebApp.Pages.Account
         public async Task<IActionResult> OnPost()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToPage("/Index");
+            return RedirectToPage("/MyHomepage");
         }
     }
 }

@@ -42,7 +42,7 @@ namespace UtilityBill.WebApp.Pages.Account
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
 
-            return LocalRedirect("/");
+            return LocalRedirect("/MyHomepage");
         }
     }
 }

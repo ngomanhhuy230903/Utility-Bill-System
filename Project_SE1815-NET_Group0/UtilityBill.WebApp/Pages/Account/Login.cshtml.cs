@@ -59,7 +59,7 @@ namespace UtilityBill.WebApp.Pages.Account
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
 
                 // Chuyển hướng về trang chủ
-                return LocalRedirect("/");
+                return LocalRedirect("/MyHomepage");
             }
             else
             {
