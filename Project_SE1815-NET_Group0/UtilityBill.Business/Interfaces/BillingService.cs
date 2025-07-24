@@ -2,6 +2,7 @@
 using UtilityBill.Business.Interfaces;
 using UtilityBill.Data.Models;
 using UtilityBill.Data.Repositories;
+using UtilityBill.Data.DTOs;
 
 namespace UtilityBill.Business.Services
 {
@@ -10,12 +11,14 @@ namespace UtilityBill.Business.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IBillingConfigService _configService;
         private readonly ILogger<BillingService> _logger;
+        private readonly IPushNotificationService _pushNotificationService;
 
-        public BillingService(IUnitOfWork unitOfWork, IBillingConfigService configService, ILogger<BillingService> logger)
+        public BillingService(IUnitOfWork unitOfWork, IBillingConfigService configService, ILogger<BillingService> logger, IPushNotificationService pushNotificationService)
         {
             _unitOfWork = unitOfWork;
             _configService = configService;
             _logger = logger;
+            _pushNotificationService = pushNotificationService;
         }
 
         public async Task GenerateInvoicesForPreviousMonthAsync()
@@ -90,6 +93,31 @@ namespace UtilityBill.Business.Services
 
             // 7. Lưu tất cả các hóa đơn vừa tạo vào DB
             await _unitOfWork.SaveChangesAsync();
+            
+            // 8. Send notification for new invoices
+            try
+            {
+                var notification = new PushNotificationDto
+                {
+                    Title = "New Invoices Generated",
+                    Body = $"Monthly invoices for {invoiceMonth}/{invoiceYear} have been generated successfully.",
+                    Tag = "invoices-generated",
+                    Data = System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        type = "invoices_generated",
+                        month = invoiceMonth,
+                        year = invoiceYear,
+                        count = occupiedRooms.Count()
+                    })
+                };
+
+                await _pushNotificationService.SendNotificationAsync(notification);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send invoice generation notification");
+            }
+            
             _logger.LogInformation("Job tạo hóa đơn hàng tháng hoàn tất.");
         }
 

@@ -6,6 +6,7 @@ using UtilityBill.Business.DTOs;
 using UtilityBill.Business.Interfaces;
 using UtilityBill.Data.Models;
 using UtilityBill.Data.Repositories;
+using UtilityBill.Data.DTOs;
 
 namespace UtilityBill.Api.Controllers
 {
@@ -16,6 +17,7 @@ namespace UtilityBill.Api.Controllers
         private readonly IEmailService _emailService;
         private readonly IMemoryCache _memoryCache;
         private readonly ITokenService _tokenService;
+        private readonly IPushNotificationService _pushNotificationService;
 
         // Constructor đã được dọn dẹp và thống nhất
         public AuthController(
@@ -23,13 +25,15 @@ namespace UtilityBill.Api.Controllers
             IPasswordHasher<User> passwordHasher,
             IEmailService emailService,
             IMemoryCache memoryCache,
-            ITokenService tokenService)
+            ITokenService tokenService,
+            IPushNotificationService pushNotificationService)
         {
             _unitOfWork = unitOfWork;
             _passwordHasher = passwordHasher;
             _emailService = emailService;
             _memoryCache = memoryCache;
             _tokenService = tokenService;
+            _pushNotificationService = pushNotificationService;
         }
 
         [HttpPost("register")]
@@ -53,6 +57,33 @@ namespace UtilityBill.Api.Controllers
             };
             await _unitOfWork.UserRepository.AddAsync(user);
             await _unitOfWork.SaveChangesAsync();
+            
+            // Send notification for user registration
+            try
+            {
+                var notification = new PushNotificationDto
+                {
+                    Title = "New User Registered",
+                    Body = $"User {user.FullName} ({user.UserName}) has been registered successfully.",
+                    Tag = "user-registered",
+                    Data = System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        type = "user_registered",
+                        userId = user.Id,
+                        userName = user.UserName,
+                        fullName = user.FullName,
+                        email = user.Email
+                    })
+                };
+
+                await _pushNotificationService.SendNotificationAsync(notification);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the registration
+                System.Diagnostics.Debug.WriteLine($"Failed to send user registration notification: {ex.Message}");
+            }
+            
             var token = await _tokenService.CreateToken(user);
             return new UserDto { UserName = user.UserName, Email = user.Email, FullName = user.FullName, Token = token };
         }

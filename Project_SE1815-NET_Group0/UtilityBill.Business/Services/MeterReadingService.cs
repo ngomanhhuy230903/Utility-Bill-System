@@ -7,6 +7,7 @@ using UtilityBill.Business.DTOs;
 using UtilityBill.Business.Interfaces;
 using UtilityBill.Data.Models;
 using UtilityBill.Data.Repositories;
+using UtilityBill.Data.DTOs;
 
 namespace UtilityBill.Business.Services
 {
@@ -15,15 +16,18 @@ namespace UtilityBill.Business.Services
         private readonly IMeterReadingRepository _repo;
         private readonly IUnitOfWork _uow;
         private readonly IMapper _mapper;
+        private readonly IPushNotificationService _pushNotificationService;
 
         public MeterReadingService(
            IMeterReadingRepository repo,
            IUnitOfWork uow,
-           IMapper mapper)
+           IMapper mapper,
+           IPushNotificationService pushNotificationService)
         {
             _repo = repo;
             _uow = uow;
             _mapper = mapper;
+            _pushNotificationService = pushNotificationService;
         }
 
         public async Task<IEnumerable<MeterReadingReadDto>> GetMeterReadingsAsync(int? month = null, int? year = null)
@@ -61,6 +65,34 @@ namespace UtilityBill.Business.Services
             var entity = _mapper.Map<MeterReading>(dto);
             await _repo.AddAsync(entity);
             await _uow.SaveChangesAsync();
+
+            // 4. Send notification for meter reading creation
+            try
+            {
+                var notification = new PushNotificationDto
+                {
+                    Title = "Meter Reading Created",
+                    Body = $"Meter reading for Room {roomExists.RoomNumber} ({dto.ReadingMonth}/{dto.ReadingYear}) has been recorded.",
+                    Tag = "meter-reading-created",
+                    Data = System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        type = "meter_reading_created",
+                        roomId = dto.RoomId,
+                        roomNumber = roomExists.RoomNumber,
+                        month = dto.ReadingMonth,
+                        year = dto.ReadingYear,
+                        electricReading = dto.ElectricReading,
+                        waterReading = dto.WaterReading
+                    })
+                };
+
+                await _pushNotificationService.SendNotificationAsync(notification);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the meter reading creation
+                System.Diagnostics.Debug.WriteLine($"Failed to send meter reading creation notification: {ex.Message}");
+            }
 
             return _mapper.Map<MeterReadingReadDto>(entity);
         }

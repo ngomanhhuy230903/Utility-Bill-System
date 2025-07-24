@@ -2,6 +2,8 @@
 using UtilityBill.Business.Services;
 using UtilityBill.Data.Models;
 using UtilityBill.Data.Repositories;
+using UtilityBill.Business.Interfaces;
+using UtilityBill.Data.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -11,10 +13,12 @@ namespace UtilityBill.Business.Services
     public class RoomService : IRoomService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IPushNotificationService _pushNotificationService;
 
-        public RoomService(IUnitOfWork unitOfWork)
+        public RoomService(IUnitOfWork unitOfWork, IPushNotificationService pushNotificationService)
         {
             _unitOfWork = unitOfWork;
+            _pushNotificationService = pushNotificationService;
         }
 
         public async Task<IEnumerable<Room>> GetAllRoomsAsync()
@@ -43,6 +47,32 @@ namespace UtilityBill.Business.Services
 
             await _unitOfWork.RoomRepository.AddAsync(room);
             await _unitOfWork.SaveChangesAsync();
+
+            // Send notification for room creation
+            try
+            {
+                var notification = new PushNotificationDto
+                {
+                    Title = "New Room Created",
+                    Body = $"Room {room.RoomNumber} has been created successfully.",
+                    Tag = "room-created",
+                    Data = System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        type = "room_created",
+                        roomId = room.Id,
+                        roomNumber = room.RoomNumber,
+                        block = room.Block,
+                        floor = room.Floor
+                    })
+                };
+
+                await _pushNotificationService.SendNotificationAsync(notification);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the room creation
+                System.Diagnostics.Debug.WriteLine($"Failed to send room creation notification: {ex.Message}");
+            }
 
             return room;
         }
@@ -107,7 +137,34 @@ namespace UtilityBill.Business.Services
             // 4. Lưu tất cả thay đổi vào DB (giữ nguyên như cũ)
             await _unitOfWork.SaveChangesAsync();
 
-            // 5. TẠO VÀ TRẢ VỀ DTO, KHÔNG TRẢ VỀ ENTITY
+            // 5. Send notification for tenant assignment
+            try
+            {
+                var notification = new PushNotificationDto
+                {
+                    Title = "Tenant Assigned",
+                    Body = $"Tenant {tenant.FullName} has been assigned to Room {room.RoomNumber}.",
+                    Tag = "tenant-assigned",
+                    Data = System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        type = "tenant_assigned",
+                        roomId = room.Id,
+                        roomNumber = room.RoomNumber,
+                        tenantId = tenant.Id,
+                        tenantName = tenant.FullName,
+                        moveInDate = assignDto.MoveInDate.ToString("yyyy-MM-dd")
+                    })
+                };
+
+                await _pushNotificationService.SendNotificationAsync(notification);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the assignment
+                System.Diagnostics.Debug.WriteLine($"Failed to send tenant assignment notification: {ex.Message}");
+            }
+
+            // 6. TẠO VÀ TRẢ VỀ DTO, KHÔNG TRẢ VỀ ENTITY
             // Đây là bước sửa lỗi
             return new TenantHistoryDto
             {
@@ -137,6 +194,9 @@ namespace UtilityBill.Business.Services
                 return false; // Không tìm thấy ai đang ở phòng này (dữ liệu không nhất quán)
             }
 
+            // Get tenant information for notification
+            var tenant = await _unitOfWork.UserRepository.GetUserByIdAsync(currentHistory.TenantId);
+
             // 3. Ghi nhận ngày chuyển đi
             currentHistory.MoveOutDate = DateOnly.FromDateTime(DateTime.UtcNow);
             _unitOfWork.TenantHistoryRepository.Update(currentHistory);
@@ -147,6 +207,33 @@ namespace UtilityBill.Business.Services
 
             // 5. Lưu thay đổi
             await _unitOfWork.SaveChangesAsync();
+
+            // 6. Send notification for tenant unassignment
+            try
+            {
+                var notification = new PushNotificationDto
+                {
+                    Title = "Tenant Unassigned",
+                    Body = $"Tenant {tenant?.FullName ?? "Unknown"} has been unassigned from Room {room.RoomNumber}.",
+                    Tag = "tenant-unassigned",
+                    Data = System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        type = "tenant_unassigned",
+                        roomId = room.Id,
+                        roomNumber = room.RoomNumber,
+                        tenantId = currentHistory.TenantId,
+                        tenantName = tenant?.FullName ?? "Unknown",
+                        moveOutDate = DateTime.UtcNow.ToString("yyyy-MM-dd")
+                    })
+                };
+
+                await _pushNotificationService.SendNotificationAsync(notification);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the unassignment
+                System.Diagnostics.Debug.WriteLine($"Failed to send tenant unassignment notification: {ex.Message}");
+            }
 
             return true;
         }
