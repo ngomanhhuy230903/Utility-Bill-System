@@ -11,25 +11,25 @@
         <form method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="mb-3">
-                <label asp-for="Room.RoomNumber" class="control-label"></label>
+                <label asp-for="Room.RoomNumber" class="control-label">Số phòng</label>
                 <input asp-for="Room.RoomNumber" class="form-control" />
                 <span asp-validation-for="Room.RoomNumber" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Room.Block" class="control-label"></label>
+                <label asp-for="Room.Block" class="control-label">Block/Dãy</label>
                 <input asp-for="Room.Block" class="form-control" />
             </div>
             <div class="mb-3">
-                <label asp-for="Room.Floor" class="control-label"></label>
+                <label asp-for="Room.Floor" class="control-label">Tầng</label>
                 <input asp-for="Room.Floor" class="form-control" />
             </div>
             <div class="mb-3">
-                <label asp-for="Room.Area" class="control-label"></label>
+                <label asp-for="Room.Area" class="control-label">Diện tích (m²)</label>
                 <input asp-for="Room.Area" class="form-control" />
                 <span asp-validation-for="Room.Area" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Room.Price" class="control-label"></label>
+                <label asp-for="Room.Price" class="control-label">Giá thuê (VNĐ)</label>
                 <input asp-for="Room.Price" class="form-control" />
                 <span asp-validation-for="Room.Price" class="text-danger"></span>
             </div>

@@ -1,10 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UtilityBill.Business.DTOs;
 using UtilityBill.Data.Repositories;
 
 namespace UtilityBill.Api.Controllers
 {
-    [Authorize]
+    //[Authorize]
     public class UsersController : BaseApiController
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -15,11 +16,21 @@ namespace UtilityBill.Api.Controllers
         }
 
         [HttpGet] // GET: api/users
-        public async Task<IActionResult> GetUsers()
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
         {
             var users = await _unitOfWork.UserRepository.GetAllAsync();
-            // Trong thực tế, bạn nên trả về một UserDto thay vì User entity
-            return Ok(users);
+
+            // Chuyển đổi từ List<User> (Entity) sang List<UserDto>
+            // Đây là bước quan trọng nhất để sửa lỗi font
+            var userDtos = users.Select(u => new UserDto
+            {
+                Id = u.Id,
+                UserName = u.UserName,
+                FullName = u.FullName,
+                Email = u.Email
+            }).ToList();
+
+            return Ok(userDtos);
         }
     }
 }

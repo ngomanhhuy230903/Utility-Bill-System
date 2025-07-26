@@ -174,10 +174,10 @@ INSERT INTO Roles (Id, Name) VALUES
 -- Khi tạo user trong app, hãy dùng BCrypt.Net.BCrypt.HashPassword(password)
 DELETE FROM Users;
 INSERT INTO Users (Id, UserName, Email, PasswordHash, FullName, PhoneNumber, IsActive) VALUES
-('admin-user-guid', 'admin', 'admin@email.com', '$2a$12$6ETOJ.0Ro9BokJU6Ou4IkeKALuRAU0jloUzZaa7kSDPMTdTvEr7Cq', 'Quản Trị Viên', '0987654321', 1),
-('tenant1-user-guid', 'nguyenvana', 'nguyenvana@email.com', '$2a$12$6ETOJ.0Ro9BokJU6Ou4IkeKALuRAU0jloUzZaa7kSDPMTdTvEr7Cq', 'Nguyễn Văn A', '0123456789', 1),
-('tenant2-user-guid', 'tranvanb', 'tranvanb@email.com', '$2a$12$6ETOJ.0Ro9BokJU6Ou4IkeKALuRAU0jloUzZaa7kSDPMTdTvEr7Cq', 'Trần Văn B', '0123456788', 1),
-('tenant3-user-guid', 'lethic', 'lethic@email.com', '$2a$12$6ETOJ.0Ro9BokJU6Ou4IkeKALuRAU0jloUzZaa7kSDPMTdTvEr7Cq', 'Lê Thị C', '0123456787', 1);
+('admin-user-guid', 'admin', 'admin@email.com', '$2a$12$6ETOJ.0Ro9BokJU6Ou4IkeKALuRAU0jloUzZaa7kSDPMTdTvEr7Cq', N'Quản Trị Viên', '0987654321', 1),
+('tenant1-user-guid', 'nguyenvana', 'nguyenvana@email.com', '$2a$12$6ETOJ.0Ro9BokJU6Ou4IkeKALuRAU0jloUzZaa7kSDPMTdTvEr7Cq', N'Nguyễn Văn A', '0123456789', 1),
+('tenant2-user-guid', 'tranvanb', 'tranvanb@email.com', '$2a$12$6ETOJ.0Ro9BokJU6Ou4IkeKALuRAU0jloUzZaa7kSDPMTdTvEr7Cq', N'Trần Văn B', '0123456788', 1),
+('tenant3-user-guid', 'lethic', 'lethic@email.com', '$2a$12$6ETOJ.0Ro9BokJU6Ou4IkeKALuRAU0jloUzZaa7kSDPMTdTvEr7Cq', N'Lê Thị C', '0123456787', 1);
 
 -- 3. Phân quyền cho người dùng (UserRoles)
 INSERT INTO UserRoles (UserId, RoleId) VALUES
@@ -240,63 +240,44 @@ DELETE FROM Invoices;
 
 -- Hóa đơn phòng 101 - Trạng thái: Chưa thanh toán (Pending)
 DECLARE @Invoice101Id UNIQUEIDENTIFIER = NEWID();
-INSERT INTO Invoices (Id, RoomId, InvoicePeriodMonth, InvoicePeriodYear, CreatedAt, DueDate, TotalAmount, Status) VALUES
-(@Invoice101Id, 101, 5, 2025, '2025-06-05', '2025-06-20', 3357500, 'Pending');
--- Chi tiết hóa đơn phòng 101
+INSERT INTO Invoices (Id, RoomId, InvoicePeriodMonth, InvoicePeriodYear, CreatedAt, DueDate, TotalAmount, Status) VALUES (@Invoice101Id, 101, 5, 2025, '2025-06-05', '2025-06-20', 3357500, 'Pending');
 INSERT INTO InvoiceDetails (InvoiceId, Description, Quantity, UnitPrice, Amount) VALUES
-(@Invoice101Id, 'Tiền phòng tháng 5/2025', 1, 3000000, 3000000),
-(@Invoice101Id, 'Tiền điện (85 kWh)', 85, 3500, 297500), -- 1285 - 1200 = 85
-(@Invoice101Id, 'Tiền nước (25 m³)', 25, 2400, 60000);  -- 525 - 500 = 25
-
--- Hóa đơn phòng 102 - Trạng thái: Đã thanh toán (Paid)
+(@Invoice101Id, N'Tiền phòng tháng 5/2025', 1, 3000000, 3000000),
+(@Invoice101Id, N'Tiền điện (85 kWh)', 85, 3500, 297500),
+(@Invoice101Id, N'Tiền nước (25 m³)', 25, 2400, 60000);
 DECLARE @Invoice102Id UNIQUEIDENTIFIER = NEWID();
-INSERT INTO Invoices (Id, RoomId, InvoicePeriodMonth, InvoicePeriodYear, CreatedAt, DueDate, TotalAmount, Status) VALUES
-(@Invoice102Id, 102, 5, 2025, '2025-06-05', '2025-06-20', 3187000, 'Paid');
--- Chi tiết hóa đơn phòng 102
+INSERT INTO Invoices (Id, RoomId, InvoicePeriodMonth, InvoicePeriodYear, CreatedAt, DueDate, TotalAmount, Status) VALUES (@Invoice102Id, 102, 5, 2025, '2025-06-05', '2025-06-20', 3187000, 'Paid');
 INSERT INTO InvoiceDetails (InvoiceId, Description, Quantity, UnitPrice, Amount) VALUES
-(@Invoice102Id, 'Tiền phòng tháng 5/2025', 1, 2800000, 2800000),
-(@Invoice102Id, 'Tiền điện (90 kWh)', 90, 3500, 315000), -- 2590 - 2500 = 90
-(@Invoice102Id, 'Tiền nước (30 m³)', 30, 2400, 72000);   -- 1130 - 1100 = 30
-
--- Hóa đơn phòng 201 - Trạng thái: Quá hạn (Overdue)
+(@Invoice102Id, N'Tiền phòng tháng 5/2025', 1, 2800000, 2800000),
+(@Invoice102Id, N'Tiền điện (90 kWh)', 90, 3500, 315000),
+(@Invoice102Id, N'Tiền nước (30 m³)', 30, 2400, 72000);
 DECLARE @Invoice201Id UNIQUEIDENTIFIER = NEWID();
-INSERT INTO Invoices (Id, RoomId, InvoicePeriodMonth, InvoicePeriodYear, CreatedAt, DueDate, TotalAmount, Status) VALUES
-(@Invoice201Id, 201, 4, 2025, '2025-05-05', '2025-05-20', 3800000, 'Overdue');
--- Chi tiết hóa đơn phòng 201 (kỳ T4/2025)
+INSERT INTO Invoices (Id, RoomId, InvoicePeriodMonth, InvoicePeriodYear, CreatedAt, DueDate, TotalAmount, Status) VALUES (@Invoice201Id, 201, 4, 2025, '2025-05-05', '2025-05-20', 3800000, 'Overdue');
 INSERT INTO InvoiceDetails (InvoiceId, Description, Quantity, UnitPrice, Amount) VALUES
-(@Invoice201Id, 'Tiền phòng tháng 4/2025', 1, 3500000, 3500000),
-(@Invoice201Id, 'Tiền điện (70 kWh)', 70, 3500, 245000),
-(@Invoice201Id, 'Tiền nước (23 m³)', 23, 2400, 55000);
-
+(@Invoice201Id, N'Tiền phòng tháng 4/2025', 1, 3500000, 3500000),
+(@Invoice201Id, N'Tiền điện (70 kWh)', 70, 3500, 245000),
+(@Invoice201Id, N'Tiền nước (23 m³)', 23, 2400, 55000);
 
 -- 8. Dữ liệu thanh toán (Payments)
 -- Thanh toán cho hóa đơn phòng 102
 INSERT INTO Payments (InvoiceId, PaymentDate, Amount, PaymentMethod, TransactionCode, Status, Notes) VALUES
-(@Invoice102Id, '2025-06-10', 3187000, 'VNPAY', 'VNPAY_TRN_1337', 'Success', 'Thanh toan qua cong VNPAY');
-
+(@Invoice102Id, '2025-06-10', 3187000, 'VNPAY', 'VNPAY_TRN_1337', 'Success', N'Thanh toán qua cổng VNPAY');
 
 -- 9. Dữ liệu lịch bảo trì (MaintenanceSchedules)
 DELETE FROM MaintenanceSchedules;
 -- Lịch bảo trì ĐÃ HOÀN THÀNH cho cả block A
 INSERT INTO MaintenanceSchedules (RoomId, Block, Title, Description, ScheduledStart, ScheduledEnd, Status, CreatedByUserId) VALUES
-(NULL, 'A', 'Bảo trì hệ thống PCCC Block A', 'Kiểm tra toàn bộ hệ thống báo cháy và bình chữa cháy.', '2025-03-15 09:00:00', '2025-03-15 17:00:00', 'Completed', 'admin-user-guid');
--- Lịch bảo trì SẮP TỚI cho phòng 301 đang ở trạng thái bảo trì
-INSERT INTO MaintenanceSchedules (RoomId, Block, Title, Description, ScheduledStart, ScheduledEnd, Status, CreatedByUserId) VALUES
-(301, 'B', 'Sửa chữa điều hòa phòng 301', 'Điều hòa không lạnh, cần kiểm tra và nạp gas.', '2025-06-25 14:00:00', '2025-06-25 16:00:00', 'Scheduled', 'admin-user-guid');
+(NULL, 'A', N'Bảo trì hệ thống PCCC Block A', N'Kiểm tra toàn bộ hệ thống báo cháy và bình chữa cháy.', '2025-03-15 09:00:00', '2025-03-15 17:00:00', 'Completed', 'admin-user-guid'),
+(301, 'B', N'Sửa chữa điều hòa phòng 301', N'Điều hòa không lạnh, cần kiểm tra và nạp gas.', '2025-06-25 14:00:00', '2025-06-25 16:00:00', 'Scheduled', 'admin-user-guid');
 
 
 -- 10. Dữ liệu thông báo (Notifications)
 DELETE FROM Notifications;
--- Thông báo hóa đơn mới cho người thuê phòng 101 và 102
 INSERT INTO Notifications (UserId, Type, Content, IsRead, RelatedEntityId) VALUES
-('tenant1-user-guid', 'EMAIL', 'Hóa đơn tiền nhà tháng 5/2025 đã được phát hành. Vui lòng thanh toán trước ngày 20/06/2025.', 0, CAST(@Invoice101Id AS NVARCHAR(255))),
-('tenant2-user-guid', 'EMAIL', 'Hóa đơn tiền nhà tháng 5/2025 đã được phát hành. Vui lòng thanh toán trước ngày 20/06/2025.', 1, CAST(@Invoice102Id AS NVARCHAR(255)));
--- Thông báo thanh toán thành công
-INSERT INTO Notifications (UserId, Type, Content, IsRead, RelatedEntityId) VALUES
-('tenant2-user-guid', 'SMS', 'Thanh toan hoa don so ' + CAST(@Invoice102Id AS NVARCHAR(255)) + ' tri gia 3,187,000 VND da thanh cong. Cam on ban.', 1, CAST(@Invoice102Id AS NVARCHAR(255)));
--- Thông báo nhắc lịch bảo trì
-INSERT INTO Notifications (UserId, Type, Content, IsRead, RelatedEntityId) VALUES
-('admin-user-guid', 'PUSH', 'Nhắc nhở: Lịch bảo trì phòng P301 sẽ diễn ra vào lúc 14:00 ngày 25/06/2025.', 0, '301');
+('tenant1-user-guid', 'EMAIL', N'Hóa đơn tiền nhà tháng 5/2025 đã được phát hành. Vui lòng thanh toán trước ngày 20/06/2025.', 0, CAST(@Invoice101Id AS NVARCHAR(255))),
+('tenant2-user-guid', 'EMAIL', N'Hóa đơn tiền nhà tháng 5/2025 đã được phát hành. Vui lòng thanh toán trước ngày 20/06/2025.', 1, CAST(@Invoice102Id AS NVARCHAR(255))),
+('tenant2-user-guid', 'SMS', N'Thanh toán hóa đơn số ' + CAST(@Invoice102Id AS NVARCHAR(255)) + N' trị giá 3,187,000 VND đã thành công. Cảm ơn bạn.', 1, CAST(@Invoice102Id AS NVARCHAR(255))),
+('admin-user-guid', 'PUSH', N'Nhắc nhở: Lịch bảo trì phòng P301 sẽ diễn ra vào lúc 14:00 ngày 25/06/2025.', 0, '301');
 
     COMMIT TRANSACTION;
     PRINT 'Database and seed data created successfully!';

@@ -51,51 +51,41 @@ namespace UtilityBill.Api.Controllers
                 Email = registerDto.Email,
                 FullName = registerDto.FullName,
                 PhoneNumber = registerDto.PhoneNumber,
+                // Luôn dùng IPasswordHasher để băm mật khẩu
                 PasswordHash = _passwordHasher.HashPassword(null, registerDto.Password),
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             };
             await _unitOfWork.UserRepository.AddAsync(user);
             await _unitOfWork.SaveChangesAsync();
-            
+
             // Send notification for user registration
             try
             {
-                var notification = new PushNotificationDto
-                {
-                    Title = "New User Registered",
-                    Body = $"User {user.FullName} ({user.UserName}) has been registered successfully.",
-                    Tag = "user-registered",
-                    Data = System.Text.Json.JsonSerializer.Serialize(new
-                    {
-                        type = "user_registered",
-                        userId = user.Id,
-                        userName = user.UserName,
-                        fullName = user.FullName,
-                        email = user.Email
-                    })
-                };
-
+                var notification = new PushNotificationDto { /* ... */ };
                 await _pushNotificationService.SendNotificationAsync(notification);
             }
             catch (Exception ex)
             {
-                // Log error but don't fail the registration
                 System.Diagnostics.Debug.WriteLine($"Failed to send user registration notification: {ex.Message}");
             }
-            
+
             var token = await _tokenService.CreateToken(user);
-            return new UserDto { UserName = user.UserName, Email = user.Email, FullName = user.FullName, Token = token };
+            // Sửa lại để trả về UserDto của Api, không phải của Business
+            return new UtilityBill.Business.DTOs.UserDto { UserName = user.UserName, Email = user.Email, FullName = user.FullName, Token = token };
         }
 
         [HttpPost("login")]
         public async Task<ActionResult<UserDto>> Login([FromBody] LoginDto loginDto)
         {
-            var user = await _unitOfWork.UserRepository.FirstOrDefaultAsync(u => u.UserName.ToLower() == loginDto.UserName.ToLower());
+            var loginInput = loginDto.UserName.ToLower();
+            var user = await _unitOfWork.UserRepository.FirstOrDefaultAsync(u => u.UserName.ToLower() == loginInput || u.Email.ToLower() == loginInput);
+            // Luôn dùng IPasswordHasher để kiểm tra
             if (user == null || _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, loginDto.Password) == PasswordVerificationResult.Failed)
             {
                 return Unauthorized("Sai tên đăng nhập hoặc mật khẩu.");
             }
+
             var token = await _tokenService.CreateToken(user);
             return new UserDto { UserName = user.UserName, Email = user.Email, FullName = user.FullName, Token = token };
         }

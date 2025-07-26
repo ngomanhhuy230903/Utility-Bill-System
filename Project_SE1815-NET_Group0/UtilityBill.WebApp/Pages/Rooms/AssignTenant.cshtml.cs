@@ -36,6 +36,7 @@ namespace UtilityBill.WebApp.Pages.Rooms
 
             var tenants = await _apiClient.GetTenantsAsync();
             TenantList = new SelectList(tenants, "Id", "FullName");
+            AssignDto.MoveInDate = DateTime.Today;
 
             return Page();
         }

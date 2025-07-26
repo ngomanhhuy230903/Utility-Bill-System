@@ -27,6 +27,7 @@
             <div class="form-floating mb-3">
                 <input asp-for="Input.PhoneNumber" class="form-control" />
                 <label asp-for="Input.PhoneNumber">Số điện thoại</label>
+                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
             </div>
             <div class="form-floating mb-3">
                 <input asp-for="Input.Password" class="form-control" type="password" />
@@ -37,3 +38,6 @@
         </form>
     </div>
 </div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

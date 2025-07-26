@@ -12,7 +12,8 @@ using QuestPDF.Infrastructure;
 using UtilityBill.Api.Services.Momo;
 using UtilityBill.Api.Services.VnPay;
 using UtilityBill.Data.Models.Momo;
-
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 using UtilityBill.Business.Settings;
 using Microsoft.AspNetCore.Identity;
 using UtilityBill.Data.Models;
@@ -85,7 +86,12 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Cấu hình để giữ nguyên ký tự tiếng Việt khi chuyển thành JSON
+        options.JsonSerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
